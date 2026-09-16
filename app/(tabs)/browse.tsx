@@ -21,7 +21,7 @@ type Sort = "Near You" | "Newest" | "Price low-high" | "Price high-low";
 export default function Browse() {
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string }>();
-  const { listings, preferences, favouriteIds, toggleFavourite } =
+  const { listings, preferences, favouriteIds, toggleFavourite, demoMode } =
     useAppStore();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState(params.category ?? "All");
@@ -64,7 +64,7 @@ export default function Browse() {
         title="Browse"
         subtitle="Discover useful things and clear-outs around your broad area."
       />
-      <DemoTag text={`Regional development data · ${broadLocation}`} />
+      {demoMode ? <DemoTag text={`Regional development data · ${broadLocation}`} /> : null}
       <TextInput
         value={q}
         onChangeText={setQ}
@@ -95,7 +95,7 @@ export default function Browse() {
         ))}
       </View>
       <Text style={styles.small}>
-        {shown.length} demo results · location shown at town/region level
+        {shown.length} {demoMode ? "demo " : ""}results · location shown at town/region level
       </Text>
       <View style={styles.wrap}>
         {shown.map((l) => (

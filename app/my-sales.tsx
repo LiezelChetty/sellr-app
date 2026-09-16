@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, Text } from "react-native";
+import { Alert, Pressable, Text } from "react-native";
 import {
   Button,
   Card,
@@ -11,20 +11,19 @@ import {
   Screen,
   styles,
 } from "../src/components/ui";
-import { CURRENT_USER_ID } from "../src/data/demo";
 import { useAppStore } from "../src/store/AppStore";
 export default function MySales() {
   const router = useRouter();
-  const { sales, listings, addSale } = useAppStore();
+  const { sales, listings, addSale, currentUserId, demoMode } = useAppStore();
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("My Clear-Out");
   const [description, setDescription] = useState(
     "Useful things ready for a new home.",
   );
   const [selected, setSelected] = useState<string[]>([]);
-  const mine = sales.filter((x) => x.sellerId === CURRENT_USER_ID);
+  const mine = sales.filter((x) => x.sellerId === currentUserId);
   const available = listings.filter(
-    (x) => x.sellerId === CURRENT_USER_ID && x.status === "LIVE",
+    (x) => x.sellerId === currentUserId && x.status === "LIVE",
   );
   return (
     <Screen>
@@ -32,7 +31,7 @@ export default function MySales() {
         title="My Sales"
         subtitle="Group listings so buyers can browse your whole clear-out together."
       />
-      <DemoTag text="Development preview · saved on this device" />
+      {demoMode ? <DemoTag text="Development preview · saved on this device" /> : null}
       {creating ? (
         <Card>
           <Field label="Sale title" value={title} onChangeText={setTitle} />
@@ -58,10 +57,9 @@ export default function MySales() {
           <Button
             label="Publish garage sale"
             disabled={!title || !selected.length}
-            onPress={() => {
-              const id = addSale(title, description, selected);
-              setCreating(false);
-              router.push(`/sale/${id}`);
+            onPress={async () => {
+              try { const id = await addSale(title, description, selected); setCreating(false); router.push(`/sale/${id}`); }
+              catch (error) { Alert.alert("Could not create garage sale", error instanceof Error ? error.message : "Try again."); }
             }}
           />
           <Button

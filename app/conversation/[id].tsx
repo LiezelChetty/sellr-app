@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 import {
   Button,
   DemoTag,
@@ -9,12 +9,11 @@ import {
   Screen,
   styles,
 } from "../../src/components/ui";
-import { CURRENT_USER_ID } from "../../src/data/demo";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
 export default function Conversation() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { conversations, profiles, sendMessage } = useAppStore();
+  const { conversations, profiles, sendMessage, currentUserId, demoMode } = useAppStore();
   const [text, setText] = useState("");
   const c = conversations.find((x) => x.id === id);
   if (!c)
@@ -24,7 +23,7 @@ export default function Conversation() {
       </Screen>
     );
   const other = profiles.find(
-    (p) => c.memberIds.includes(p.id) && p.id !== CURRENT_USER_ID,
+    (p) => c.memberIds.includes(p.id) && p.id !== currentUserId,
   );
   return (
     <Screen>
@@ -32,11 +31,11 @@ export default function Conversation() {
         title={other?.displayName ?? "Messages"}
         subtitle="Keep personal details private until you are comfortable."
       />
-      <DemoTag text="Messages stay on this device" />
+      {demoMode ? <DemoTag text="Messages stay on this device" /> : null}
       <View style={{ gap: 9 }}>
         {c.messages.length ? (
           c.messages.map((m) => {
-            const mine = m.senderId === CURRENT_USER_ID;
+            const mine = m.senderId === currentUserId;
             return (
               <View
                 key={m.id}
@@ -75,15 +74,12 @@ export default function Conversation() {
       <Button
         label="Send message"
         disabled={!text.trim()}
-        onPress={() => {
-          sendMessage(c.id, text.trim());
-          setText("");
+        onPress={async () => {
+          try { await sendMessage(c.id, text.trim()); setText(""); }
+          catch (error) { Alert.alert("Could not send message", error instanceof Error ? error.message : "Try again."); }
         }}
       />
-      <Text style={styles.small}>
-        No message is sent to a real person. Production messaging requires
-        authenticated, private realtime storage and moderation.
-      </Text>
+      <Text style={styles.small}>{demoMode ? "Demo messages remain on this device." : "Messages are visible only to conversation participants. Keep personal details private."}</Text>
     </Screen>
   );
 }

@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import { CURRENT_USER_ID } from "../../src/data/demo";
 import {
   Card,
   DemoTag,
@@ -16,13 +15,13 @@ import { useState } from "react";
 import { REGIONS } from "../../src/config/regions";
 export default function Offers() {
   const router = useRouter();
-  const { offers, listings, preferences } = useAppStore();
+  const { offers, listings, preferences, currentUserId, demoMode } = useAppStore();
   const symbol = REGIONS[preferences.countryCode].symbol;
   const [tab, setTab] = useState<"RECEIVED" | "SENT">("RECEIVED");
   const shown = offers.filter((o) =>
     tab === "RECEIVED"
-      ? o.sellerId === CURRENT_USER_ID
-      : o.buyerId === CURRENT_USER_ID,
+      ? o.sellerId === currentUserId
+      : o.buyerId === currentUserId,
   );
   return (
     <Screen>
@@ -30,7 +29,7 @@ export default function Offers() {
         title="Offers"
         subtitle="Negotiate locally, then arrange the transaction directly."
       />
-      <DemoTag text="Offers are local demo state" />
+      {demoMode ? <DemoTag text="Offers are local demo state" /> : null}
       <View style={styles.wrap}>
         <Pill
           label="Received"

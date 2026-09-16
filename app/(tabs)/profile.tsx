@@ -9,15 +9,16 @@ import {
   Screen,
   styles,
 } from "../../src/components/ui";
-import { CURRENT_USER_ID } from "../../src/data/demo";
 import { formatApproximateLocation } from "../../src/config/regions";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
+import { useAuth } from "../../src/store/AuthStore";
 export default function Profile() {
   const router = useRouter();
-  const { preferences, profiles, listings, offers, favouriteIds, resetDemo } =
+  const { preferences, profiles, listings, offers, favouriteIds, resetDemo, currentUserId, demoMode } =
     useAppStore();
-  const me = profiles.find((x) => x.id === CURRENT_USER_ID)!;
+  const auth = useAuth();
+  const me = profiles.find((x) => x.id === currentUserId) ?? auth.profile ?? { id: currentUserId, displayName: "OfferMe member", approximateLocation: "Area not set", memberSince: new Date().toISOString() };
   const broadLocation = formatApproximateLocation(
     preferences.countryCode,
     preferences.region,
@@ -49,14 +50,14 @@ export default function Profile() {
       <Logo />
       <Header
         title={me.displayName}
-        subtitle={`${broadLocation} · Demo profile`}
+        subtitle={`${broadLocation}${demoMode ? " · Demo profile" : ""}`}
       />
-      <DemoTag />
+      {demoMode ? <DemoTag /> : null}
       <Card>
         {row(
           "cube-outline",
           "My Listings",
-          `${listings.filter((x) => x.sellerId === CURRENT_USER_ID).length} items`,
+          `${listings.filter((x) => x.sellerId === currentUserId).length} items`,
           () => router.push("/my-listings"),
         )}
         <View style={styles.divider} />
@@ -70,14 +71,14 @@ export default function Profile() {
         {row(
           "pricetag-outline",
           "Offers Received",
-          `${offers.filter((x) => x.sellerId === CURRENT_USER_ID).length} offers`,
+          `${offers.filter((x) => x.sellerId === currentUserId).length} offers`,
           () => router.push("/(tabs)/offers"),
         )}
         <View style={styles.divider} />
         {row(
           "paper-plane-outline",
           "Offers Sent",
-          `${offers.filter((x) => x.buyerId === CURRENT_USER_ID).length} offers`,
+          `${offers.filter((x) => x.buyerId === currentUserId).length} offers`,
           () => router.push("/(tabs)/offers"),
         )}
         <View style={styles.divider} />
@@ -107,12 +108,7 @@ export default function Profile() {
           () => router.push("/help"),
         )}
         <View style={styles.divider} />
-        {row("refresh-outline", "Reset demo", "Clear local activity", () =>
-          Alert.alert("Reset demo?", "This clears local OfferMe activity.", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Reset", style: "destructive", onPress: resetDemo },
-          ]),
-        )}
+        {demoMode ? row("refresh-outline", "Reset demo", "Clear local activity", () => Alert.alert("Reset demo?", "This clears local OfferMe activity.", [{ text: "Cancel", style: "cancel" }, { text: "Reset", style: "destructive", onPress: resetDemo }])) : row("log-out-outline", "Log out", "Sign out of this device", () => Alert.alert("Log out?", "You can log back in with your email and password.", [{ text: "Cancel", style: "cancel" }, { text: "Log out", style: "destructive", onPress: () => auth.signOut() }]))}
       </Card>
       <Text style={[styles.small, { textAlign: "center" }]}>
         OfferMe connects buyers and sellers. Payment and collection are arranged

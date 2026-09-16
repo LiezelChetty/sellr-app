@@ -21,7 +21,6 @@ import {
   Screen,
   styles,
 } from "../../src/components/ui";
-import { CURRENT_USER_ID } from "../../src/data/demo";
 import { REGIONS } from "../../src/config/regions";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
@@ -40,12 +39,17 @@ export default function Item() {
     createOffer,
     startConversation,
     markSold,
+    reportListing,
+    currentUserId,
+    demoMode,
   } = useAppStore();
   const listing = listings.find((x) => x.id === id);
   const [offerOpen, setOfferOpen] = useState(false);
   const [soldOpen, setSoldOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
   if (!listing)
     return (
       <Screen>
@@ -54,7 +58,7 @@ export default function Item() {
     );
   const seller = profiles.find((x) => x.id === listing.sellerId)!;
   const symbol = REGIONS[preferences.countryCode].symbol;
-  const mine = listing.sellerId === CURRENT_USER_ID;
+  const mine = listing.sellerId === currentUserId;
   const others = listings
     .filter(
       (x) =>
@@ -63,15 +67,17 @@ export default function Item() {
         x.status === "LIVE",
     )
     .slice(0, 2);
-  const sendOffer = () => {
+  const sendOffer = async () => {
     if (!Number(amount))
       return Alert.alert(
         "Enter an offer",
         "Add the amount you would like to offer.",
       );
-    const offerId = createOffer(listing.id, Number(amount), message);
-    setOfferOpen(false);
-    router.push(`/offer/${offerId}`);
+    try {
+      const offerId = await createOffer(listing.id, Number(amount), message);
+      setOfferOpen(false);
+      router.push(`/offer/${offerId}`);
+    } catch (error) { Alert.alert("Could not send offer", error instanceof Error ? error.message : "Try again."); }
   };
   const showShareError = () =>
     Alert.alert("Sharing unavailable", "Please try sharing again.");
@@ -182,20 +188,16 @@ export default function Item() {
             label="MESSAGE SELLER"
             icon="chatbubble-outline"
             variant="secondary"
-            onPress={() =>
-              router.push(`/conversation/${startConversation(listing.id)}`)
-            }
+            onPress={async () => {
+              try { router.push(`/conversation/${await startConversation(listing.id)}`); }
+              catch (error) { Alert.alert("Could not start conversation", error instanceof Error ? error.message : "Try again."); }
+            }}
           />
         </>
       )}
       <View style={styles.row}>
         <Button label="Share" variant="ghost" onPress={shareListing} />
-        <Button
-          label="Report unavailable in preview"
-          variant="ghost"
-          disabled
-          onPress={() => {}}
-        />
+        <Button label={demoMode ? "Reporting unavailable in demo" : "Report listing"} variant="ghost" disabled={demoMode || mine} onPress={() => setReportOpen(true)} />
       </View>
       <View
         style={{
@@ -238,7 +240,7 @@ export default function Item() {
             title={`Make an offer on ${listing.title}`}
             subtitle={`Asking price ${money(symbol, listing.askingPrice)}`}
           />
-          <DemoTag text="Offer stays on this device" />
+          {demoMode ? <DemoTag text="Offer stays on this device" /> : null}
           <Field
             label="Your offer"
             keyboardType="numeric"
@@ -282,9 +284,9 @@ export default function Item() {
           </Card>
           <Button
             label="Confirm sold"
-            onPress={() => {
-              markSold(listing.id);
-              setSoldOpen(false);
+            onPress={async () => {
+              try { await markSold(listing.id); setSoldOpen(false); }
+              catch (error) { Alert.alert("Could not update listing", error instanceof Error ? error.message : "Try again."); }
             }}
           />
           <Button
@@ -293,6 +295,9 @@ export default function Item() {
             onPress={() => setSoldOpen(false)}
           />
         </Screen>
+      </Modal>
+      <Modal visible={reportOpen} animationType="slide" onRequestClose={() => setReportOpen(false)}>
+        <Screen><Header title="Report this listing" subtitle="Tell OfferMe what appears unsafe or inappropriate. Do not include private information." /><Field label="Reason" multiline value={reportReason} onChangeText={setReportReason} /><Button label="Submit report" disabled={reportReason.trim().length < 10} onPress={async () => { try { await reportListing(listing.id, reportReason.trim()); setReportOpen(false); setReportReason(""); Alert.alert("Report submitted", "Thank you. The report is recorded for review."); } catch (error) { Alert.alert("Could not submit report", error instanceof Error ? error.message : "Try again."); } }} /><Button label="Cancel" variant="ghost" onPress={() => setReportOpen(false)} /></Screen>
       </Modal>
     </Screen>
   );

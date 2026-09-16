@@ -11,14 +11,13 @@ import {
   Screen,
   styles,
 } from "../../src/components/ui";
-import { CURRENT_USER_ID } from "../../src/data/demo";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
 import { REGIONS } from "../../src/config/regions";
 export default function OfferDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { offers, listings, preferences, updateOffer, startConversation } =
+  const { offers, listings, preferences, updateOffer, startConversation, currentUserId, demoMode } =
     useAppStore();
   const offer = offers.find((x) => x.id === id);
   const [counter, setCounter] = useState("");
@@ -29,11 +28,11 @@ export default function OfferDetail() {
       </Screen>
     );
   const listing = listings.find((x) => x.id === offer.listingIds[0]);
-  const received = offer.sellerId === CURRENT_USER_ID;
+  const received = offer.sellerId === currentUserId;
   const canRespond = received || offer.status === "COUNTERED";
   const symbol = REGIONS[preferences.countryCode].symbol;
-  const respond = (status: "ACCEPTED" | "DECLINED") => {
-    updateOffer(offer.id, status);
+  const respond = async (status: "ACCEPTED" | "DECLINED") => {
+    try { await updateOffer(offer.id, status); } catch (error) { Alert.alert("Could not update offer", error instanceof Error ? error.message : "Try again."); return; }
     if (status === "ACCEPTED")
       Alert.alert(
         "Offer accepted!",
@@ -47,7 +46,7 @@ export default function OfferDetail() {
         title={`${money(symbol, offer.amount)} for ${listing?.title ?? "items"}`}
         subtitle={offer.message || "No message"}
       />
-      <DemoTag text="Local demo negotiation" />
+      {demoMode ? <DemoTag text="Local demo negotiation" /> : null}
       <Card>
         <View style={styles.between}>
           <Text style={styles.h2}>Status</Text>
@@ -83,7 +82,7 @@ export default function OfferDetail() {
             variant="secondary"
             disabled={!Number(counter)}
             onPress={() => {
-              updateOffer(offer.id, "COUNTERED", Number(counter));
+              updateOffer(offer.id, "COUNTERED", Number(counter)).catch((error) => Alert.alert("Could not counter offer", error.message));
               setCounter("");
             }}
           />
@@ -95,12 +94,7 @@ export default function OfferDetail() {
         </>
       ) : null}
       {offer.status === "PENDING" && !received ? (
-        <Card>
-          <Text style={styles.h2}>Waiting for the seller</Text>
-          <Text style={styles.body}>
-            You can message the seller while they consider your offer.
-          </Text>
-        </Card>
+        <><Card><Text style={styles.h2}>Waiting for the seller</Text><Text style={styles.body}>You can message the seller while they consider your offer.</Text></Card><Button label="Withdraw offer" variant="ghost" onPress={() => updateOffer(offer.id, "WITHDRAWN").catch((error) => Alert.alert("Could not withdraw offer", error.message))} /></>
       ) : null}
       {offer.status === "ACCEPTED" ? (
         <Card style={{ backgroundColor: colors.greenSoft }}>
@@ -115,9 +109,10 @@ export default function OfferDetail() {
           label="Message"
           icon="chatbubble-outline"
           variant="ghost"
-          onPress={() =>
-            router.push(`/conversation/${startConversation(listing.id)}`)
-          }
+          onPress={async () => {
+            try { router.push(`/conversation/${await startConversation(listing.id)}`); }
+            catch (error) { Alert.alert("Could not start conversation", error instanceof Error ? error.message : "Try again."); }
+          }}
         />
       ) : null}
       <Text style={styles.small}>

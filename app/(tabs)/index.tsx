@@ -27,7 +27,7 @@ const categoryIcons: (keyof typeof Ionicons.glyphMap)[] = [
 ];
 export default function Home() {
   const router = useRouter();
-  const { listings, sales, preferences, favouriteIds, toggleFavourite } =
+  const { listings, sales, preferences, favouriteIds, toggleFavourite, demoMode } =
     useAppStore();
   const symbol = REGIONS[preferences.countryCode].symbol;
   const broadLocation = formatApproximateLocation(
@@ -71,7 +71,7 @@ export default function Home() {
           </Text>
         </Pressable>
       </View>
-      <DemoTag text={`Regional development data · ${broadLocation}`} />
+      {demoMode ? <DemoTag text={`Regional development data · ${broadLocation}`} /> : null}
       <Pressable
         onPress={() => router.push("/(tabs)/browse")}
         style={[
@@ -126,7 +126,7 @@ export default function Home() {
             <View style={{ padding: 13, gap: 3 }}>
               <Text style={styles.h2}>{s.title}</Text>
               <Text style={styles.small}>
-                {s.approximateLocation} · {s.itemCount} items · DEMO
+                {s.approximateLocation} · {s.itemCount} items{s.isDemo ? " · DEMO" : ""}
               </Text>
             </View>
           </Pressable>

@@ -5,17 +5,27 @@ import { AppStoreProvider, useAppStore } from "../src/store/AppStore";
 import { Loading } from "../src/components/ui";
 import { colors } from "../src/theme";
 import { SafeBackButton } from "../src/components/navigation";
+import { AuthProvider, useAuth } from "../src/store/AuthStore";
 function Gate() {
   const { ready, preferences } = useAppStore();
+  const auth = useAuth();
   const segments = useSegments();
   const router = useRouter();
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !auth.ready) return;
+    const publicAuthRoute = ["welcome", "sign-up", "login", "forgot-password"].includes(String(segments[0]));
+    const profileSetup = segments[0] === "profile-setup";
+    if (!auth.demoMode) {
+      if (!auth.session && !publicAuthRoute) router.replace("/welcome");
+      else if (auth.session && !auth.preferences?.onboarded && !profileSetup) router.replace("/profile-setup");
+      else if (auth.session && auth.preferences?.onboarded && (publicAuthRoute || profileSetup)) router.replace("/(tabs)");
+      return;
+    }
     const onboarding = segments[0] === "onboarding";
     if (!preferences.onboarded && !onboarding) router.replace("/onboarding");
     if (preferences.onboarded && onboarding) router.replace("/(tabs)");
-  }, [ready, preferences.onboarded, segments, router]);
-  if (!ready) return <Loading />;
+  }, [ready, preferences.onboarded, segments, router, auth.ready, auth.demoMode, auth.session, auth.preferences?.onboarded]);
+  if (!ready || !auth.ready) return <Loading />;
   return (
     <>
       <StatusBar style="dark" />
@@ -30,6 +40,11 @@ function Gate() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-up" options={{ title: "Create account", headerLeft: () => <SafeBackButton fallback="/welcome" /> }} />
+        <Stack.Screen name="login" options={{ title: "Log in", headerLeft: () => <SafeBackButton fallback="/welcome" /> }} />
+        <Stack.Screen name="forgot-password" options={{ title: "Reset password", headerLeft: () => <SafeBackButton fallback="/login" /> }} />
+        <Stack.Screen name="profile-setup" options={{ headerShown: false }} />
         <Stack.Screen name="sell" options={{ headerShown: false }} />
         <Stack.Screen
           name="item/[id]"
@@ -114,8 +129,10 @@ function Gate() {
 }
 export default function RootLayout() {
   return (
-    <AppStoreProvider>
-      <Gate />
-    </AppStoreProvider>
+    <AuthProvider>
+      <AppStoreProvider>
+        <Gate />
+      </AppStoreProvider>
+    </AuthProvider>
   );
 }

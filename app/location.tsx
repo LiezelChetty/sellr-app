@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 import { Button, Header, Pill, Screen, styles } from "../src/components/ui";
 import { LocationSelector } from "../src/components/LocationSelector";
 import {
@@ -61,9 +61,9 @@ export default function LocationSettings() {
       <Button
         label="Save location"
         disabled={!region || !town}
-        onPress={() => {
-          updateLocation(country, region, town);
-          goBack();
+        onPress={async () => {
+          try { await updateLocation(country, region, town); goBack(); }
+          catch (error) { Alert.alert("Could not update location", error instanceof Error ? error.message : "Try again."); }
         }}
       />
       <Text style={styles.small}>

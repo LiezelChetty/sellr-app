@@ -33,7 +33,7 @@ const blank: AIAnalysis = {
 export default function Sell() {
   const router = useRouter();
   const goBack = useSafeBack("/(tabs)");
-  const { preferences, addListing } = useAppStore();
+  const { preferences, addListing, demoMode } = useAppStore();
   const [step, setStep] = useState(0);
   const [photos, setPhotos] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState(blank);
@@ -76,9 +76,14 @@ export default function Sell() {
       ...a,
       [key]: key === "suggestedPrice" ? Number(value) || 0 : value,
     }));
-  const finish = () => {
-    const id = addListing({ ...analysis, photos });
-    router.replace(`/item/${id}?created=1`);
+  const finish = async () => {
+    try {
+      setLoading(true);
+      const id = await addListing({ ...analysis, photos });
+      router.replace(`/item/${id}?created=1`);
+    } catch (error) {
+      Alert.alert("Could not publish listing", error instanceof Error ? error.message : "Try again.");
+    } finally { setLoading(false); }
   };
   return (
     <Screen>
@@ -94,7 +99,7 @@ export default function Sell() {
         <Logo />
         <Text style={styles.small}>{step + 1}/3</Text>
       </View>
-      <DemoTag text="Development preview · suggestions are simulated" />
+      {demoMode ? <DemoTag text="Development preview · suggestions are simulated" /> : <DemoTag text="Draft suggestions are simulated—review before publishing" />}
       {step === 0 ? (
         <>
           <Header

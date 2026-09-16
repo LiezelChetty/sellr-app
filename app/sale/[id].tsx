@@ -12,7 +12,7 @@ import { useAppStore } from "../../src/store/AppStore";
 export default function Sale() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { sales, listings, preferences, favouriteIds, toggleFavourite } =
+  const { sales, listings, preferences, favouriteIds, toggleFavourite, demoMode } =
     useAppStore();
   const sale = sales.find((x) => x.id === id);
   if (!sale)
@@ -38,7 +38,7 @@ export default function Sale() {
         title={sale.title}
         subtitle={`${sale.approximateLocation} · ${items.length} available items`}
       />
-      <DemoTag />
+      {demoMode ? <DemoTag /> : null}
       <Text style={styles.body}>{sale.description}</Text>
       <View style={styles.wrap}>
         {items.map((l) => (

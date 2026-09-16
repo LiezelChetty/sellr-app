@@ -20,6 +20,7 @@ export default function Seller() {
     preferences,
     favouriteIds,
     toggleFavourite,
+    demoMode,
   } = useAppStore();
   const seller = profiles.find((x) => x.id === id);
   if (!seller)
@@ -41,7 +42,7 @@ export default function Seller() {
         title={seller.displayName}
         subtitle={`${seller.approximateLocation} · Member since ${new Date(seller.memberSince).getFullYear()}`}
       />
-      <DemoTag text="Development seller profile" />
+      {demoMode ? <DemoTag text="Development seller profile" /> : null}
       <View style={styles.wrap}>
         <View style={styles.card}>
           <Text style={styles.h1}>{items.length}</Text>

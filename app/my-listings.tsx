@@ -8,13 +8,12 @@ import {
   Screen,
   styles,
 } from "../src/components/ui";
-import { CURRENT_USER_ID } from "../src/data/demo";
 import { REGIONS } from "../src/config/regions";
 import { useAppStore } from "../src/store/AppStore";
 export default function MyListings() {
   const router = useRouter();
-  const { listings, preferences } = useAppStore();
-  const mine = listings.filter((x) => x.sellerId === CURRENT_USER_ID);
+  const { listings, preferences, currentUserId } = useAppStore();
+  const mine = listings.filter((x) => x.sellerId === currentUserId);
   const symbol = REGIONS[preferences.countryCode].symbol;
   return (
     <Screen>
