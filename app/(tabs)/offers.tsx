@@ -13,9 +13,11 @@ import {
 } from "../../src/components/ui";
 import { useAppStore } from "../../src/store/AppStore";
 import { useState } from "react";
+import { REGIONS } from "../../src/config/regions";
 export default function Offers() {
   const router = useRouter();
-  const { offers, listings } = useAppStore();
+  const { offers, listings, preferences } = useAppStore();
+  const symbol = REGIONS[preferences.countryCode].symbol;
   const [tab, setTab] = useState<"RECEIVED" | "SENT">("RECEIVED");
   const shown = offers.filter((o) =>
     tab === "RECEIVED"
@@ -49,7 +51,9 @@ export default function Offers() {
               <Card>
                 <View style={styles.between}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.h2}>{money("€", o.amount)} offer</Text>
+                    <Text style={styles.h2}>
+                      {money(symbol, o.amount)} offer
+                    </Text>
                     <Text style={styles.body}>
                       {l?.title ?? "Bundle offer"}
                     </Text>

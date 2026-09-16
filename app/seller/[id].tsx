@@ -71,10 +71,15 @@ export default function Seller() {
           />
         ))}
       </View>
-      <Button label="Block user" variant="ghost" onPress={() => {}} />
+      <Button
+        label="Block unavailable in preview"
+        variant="ghost"
+        disabled
+        onPress={() => {}}
+      />
       <Text style={styles.small}>
-        Blocking and reporting are service boundaries only until authenticated
-        moderation is connected.
+        Blocking requires authenticated accounts and moderation, which are not
+        connected in this development build.
       </Text>
     </Screen>
   );

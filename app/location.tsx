@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
 import { Button, Header, Pill, Screen, styles } from "../src/components/ui";
@@ -12,10 +11,11 @@ import {
 import { useAppStore } from "../src/store/AppStore";
 import { CountryCode } from "../src/types/domain";
 import { colors } from "../src/theme";
+import { useSafeBack } from "../src/components/navigation";
 
 export default function LocationSettings() {
-  const router = useRouter();
   const { preferences, updateLocation } = useAppStore();
+  const goBack = useSafeBack("/(tabs)/profile");
   const [country, setCountry] = useState<CountryCode>(preferences.countryCode);
   const [region, setRegion] = useState(preferences.region);
   const [town, setTown] = useState(preferences.town);
@@ -63,7 +63,7 @@ export default function LocationSettings() {
         disabled={!region || !town}
         onPress={() => {
           updateLocation(country, region, town);
-          router.back();
+          goBack();
         }}
       />
       <Text style={styles.small}>

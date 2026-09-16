@@ -32,7 +32,7 @@ export default function MySales() {
         title="My Sales"
         subtitle="Group listings so buyers can browse your whole clear-out together."
       />
-      <DemoTag />
+      <DemoTag text="Development preview · saved on this device" />
       {creating ? (
         <Card>
           <Field label="Sale title" value={title} onChangeText={setTitle} />
@@ -76,7 +76,7 @@ export default function MySales() {
           icon="storefront-outline"
           onPress={() => setCreating(true)}
         />
-      )}{" "}
+      )}
       {mine.map((s) => (
         <Pressable key={s.id} onPress={() => router.push(`/sale/${s.id}`)}>
           <Card>

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { colors } from "../../src/theme";
+import { View } from "react-native";
+import { colors, shadow } from "../../src/theme";
 const icon =
   (name: keyof typeof Ionicons.glyphMap) =>
   ({ color, size }: { color: any; size: number }) => (
@@ -13,11 +14,10 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.greenDark,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "800" },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "800", marginTop: 3 },
         tabBarStyle: {
-          height: 74,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: 6,
           backgroundColor: colors.surface,
           borderTopColor: colors.line,
         },
@@ -35,18 +35,32 @@ export default function TabLayout() {
         name="sell-action"
         options={{
           title: "SELL",
+          tabBarItemStyle: { overflow: "visible" },
           tabBarIcon: () => (
-            <Ionicons
-              name="add"
-              color={colors.white}
-              size={28}
+            <View
               style={{
-                backgroundColor: colors.greenDark,
-                borderRadius: 26,
-                padding: 9,
-                marginTop: -22,
+                width: 32,
+                height: 24,
+                overflow: "visible",
               }}
-            />
+            >
+              <View
+                style={{
+                  position: "absolute",
+                  left: -12,
+                  top: -22,
+                  width: 56,
+                  height: 56,
+                  backgroundColor: colors.greenDark,
+                  borderRadius: 28,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  ...shadow,
+                }}
+              >
+                <Ionicons name="add" color={colors.white} size={30} />
+              </View>
+            </View>
           ),
         }}
       />

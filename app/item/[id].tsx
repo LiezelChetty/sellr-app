@@ -1,7 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Image, Modal, Pressable, Text, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  Share,
+  Text,
+  View,
+} from "react-native";
 import {
   Button,
   Card,
@@ -65,11 +73,23 @@ export default function Item() {
     setOfferOpen(false);
     router.push(`/offer/${offerId}`);
   };
-  const safety = () =>
-    Alert.alert(
-      "Report listing",
-      "Moderation submission is a backend-ready boundary in this demo. No report is sent.",
-    );
+  const showShareError = () =>
+    Alert.alert("Sharing unavailable", "Please try sharing again.");
+  const shareListing = async () => {
+    try {
+      await Share.share({
+        title: `${listing.title} on OfferMe`,
+        message: [
+          `${listing.title} — ${money(symbol, listing.askingPrice)}`,
+          `${listing.approximateLocation} (approximate area)`,
+          listing.description,
+          "Shared from OfferMe. Contact and collection are arranged directly in the app.",
+        ].join("\n\n"),
+      });
+    } catch {
+      showShareError();
+    }
+  };
   return (
     <Screen>
       {created ? (
@@ -169,17 +189,13 @@ export default function Item() {
         </>
       )}
       <View style={styles.row}>
+        <Button label="Share" variant="ghost" onPress={shareListing} />
         <Button
-          label="Share"
+          label="Report unavailable in preview"
           variant="ghost"
-          onPress={() =>
-            Alert.alert(
-              "Share",
-              "Native sharing can be connected before release.",
-            )
-          }
+          disabled
+          onPress={() => {}}
         />
-        <Button label="Report" variant="ghost" onPress={safety} />
       </View>
       <View
         style={{

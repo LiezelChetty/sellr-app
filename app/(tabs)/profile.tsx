@@ -97,22 +97,14 @@ export default function Profile() {
           "shield-checkmark-outline",
           "Safety",
           "Meeting and privacy guidance",
-          () =>
-            Alert.alert(
-              "Stay safe",
-              "Meet safely. Do not send money before you are comfortable with the transaction. Never share unnecessary personal information.",
-            ),
+          () => router.push("/safety"),
         )}
         <View style={styles.divider} />
         {row(
           "help-circle-outline",
           "Help & policies",
           "Privacy, terms and support",
-          () =>
-            Alert.alert(
-              "Production content required",
-              "Public policies and support channels must be completed before launch.",
-            ),
+          () => router.push("/help"),
         )}
         <View style={styles.divider} />
         {row("refresh-outline", "Reset demo", "Clear local activity", () =>

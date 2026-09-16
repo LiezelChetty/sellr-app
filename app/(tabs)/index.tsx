@@ -55,7 +55,12 @@ export default function Home() {
     <Screen>
       <View style={styles.between}>
         <Logo />
-        <Pressable style={styles.row}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Change selling location"
+          onPress={() => router.push("/location")}
+          style={styles.row}
+        >
           <Ionicons
             name="location-outline"
             size={18}

@@ -18,6 +18,7 @@ import { itemAnalysisService } from "../src/services/ai";
 import { useAppStore } from "../src/store/AppStore";
 import { AIAnalysis } from "../src/types/domain";
 import { colors } from "../src/theme";
+import { useSafeBack } from "../src/components/navigation";
 const blank: AIAnalysis = {
   title: "",
   category: "Home",
@@ -31,6 +32,7 @@ const blank: AIAnalysis = {
 };
 export default function Sell() {
   const router = useRouter();
+  const goBack = useSafeBack("/(tabs)");
   const { preferences, addListing } = useAppStore();
   const [step, setStep] = useState(0);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -81,19 +83,24 @@ export default function Sell() {
   return (
     <Screen>
       <View style={styles.between}>
-        <Pressable onPress={() => (step ? setStep(step - 1) : router.back())}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={step ? "Previous step" : "Back to Home"}
+          hitSlop={12}
+          onPress={() => (step ? setStep(step - 1) : goBack())}
+        >
           <Ionicons name="arrow-back" size={25} color={colors.greenDark} />
         </Pressable>
         <Logo />
         <Text style={styles.small}>{step + 1}/3</Text>
       </View>
-      <DemoTag text="AI preparation is mocked" />
+      <DemoTag text="Development preview · suggestions are simulated" />
       {step === 0 ? (
         <>
           <Header
             eyebrow="START SELLING"
             title="Photograph one thing—or a whole clear-out."
-            subtitle="Add original photos now. Batch item detection is prepared for future backend AI; this demo creates one reviewed listing."
+            subtitle="Add original photos, then review every suggested detail before publishing."
           />
           <View style={[styles.wrap, { minHeight: 145 }]}>
             {photos.map((uri, i) => (
@@ -149,9 +156,7 @@ export default function Sell() {
           />
           <Button
             disabled={!photos.length || loading}
-            label={
-              loading ? "Preparing demo draft…" : "Prepare listing (mock AI)"
-            }
+            label={loading ? "Preparing draft…" : "Prepare draft suggestion"}
             onPress={analyse}
           />
         </>
@@ -205,8 +210,8 @@ export default function Sell() {
             onChangeText={(v) => update("suggestedPrice", v)}
           />
           <Text style={styles.small}>
-            Mock price confidence {Math.round(analysis.priceConfidence * 100)}%
-            · guidance only
+            Draft confidence {Math.round(analysis.priceConfidence * 100)}% ·
+            simulated guidance only
           </Text>
           <Button
             label="Review listing"
@@ -251,8 +256,8 @@ export default function Sell() {
               color={colors.greenDark}
             />
             <Text style={[styles.body, { flex: 1 }]}>
-              Named clear-out grouping is supported by the domain and encouraged
-              for future batch publishing.
+              You can add this item to a named garage sale from My Sales after
+              publishing.
             </Text>
           </View>
           <Button label="Publish on OfferMe" onPress={finish} />

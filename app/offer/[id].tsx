@@ -14,10 +14,12 @@ import {
 import { CURRENT_USER_ID } from "../../src/data/demo";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
+import { REGIONS } from "../../src/config/regions";
 export default function OfferDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { offers, listings, updateOffer, startConversation } = useAppStore();
+  const { offers, listings, preferences, updateOffer, startConversation } =
+    useAppStore();
   const offer = offers.find((x) => x.id === id);
   const [counter, setCounter] = useState("");
   if (!offer)
@@ -28,6 +30,8 @@ export default function OfferDetail() {
     );
   const listing = listings.find((x) => x.id === offer.listingIds[0]);
   const received = offer.sellerId === CURRENT_USER_ID;
+  const canRespond = received || offer.status === "COUNTERED";
+  const symbol = REGIONS[preferences.countryCode].symbol;
   const respond = (status: "ACCEPTED" | "DECLINED") => {
     updateOffer(offer.id, status);
     if (status === "ACCEPTED")
@@ -40,7 +44,7 @@ export default function OfferDetail() {
     <Screen>
       <Header
         eyebrow={received ? "OFFER RECEIVED" : "OFFER SENT"}
-        title={`${money("€", offer.amount)} for ${listing?.title ?? "items"}`}
+        title={`${money(symbol, offer.amount)} for ${listing?.title ?? "items"}`}
         subtitle={offer.message || "No message"}
       />
       <DemoTag text="Local demo negotiation" />
@@ -57,17 +61,14 @@ export default function OfferDetail() {
           </Text>
         </View>
         <Text style={styles.small}>
-          Asking price {listing ? money("€", listing.askingPrice) : "—"}
+          Asking price {listing ? money(symbol, listing.askingPrice) : "—"}
         </Text>
       </Card>
-      {offer.status === "PENDING" || offer.status === "COUNTERED" ? (
+      {(offer.status === "PENDING" || offer.status === "COUNTERED") &&
+      canRespond ? (
         <>
           <Button
-            label={
-              received
-                ? `ACCEPT ${money("€", offer.amount)}`
-                : `ACCEPT ${money("€", offer.amount)}`
-            }
+            label={`ACCEPT ${money(symbol, offer.amount)}`}
             onPress={() => respond("ACCEPTED")}
           />
           <Field
@@ -92,6 +93,14 @@ export default function OfferDetail() {
             onPress={() => respond("DECLINED")}
           />
         </>
+      ) : null}
+      {offer.status === "PENDING" && !received ? (
+        <Card>
+          <Text style={styles.h2}>Waiting for the seller</Text>
+          <Text style={styles.body}>
+            You can message the seller while they consider your offer.
+          </Text>
+        </Card>
       ) : null}
       {offer.status === "ACCEPTED" ? (
         <Card style={{ backgroundColor: colors.greenSoft }}>

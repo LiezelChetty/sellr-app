@@ -73,7 +73,7 @@ export default function Conversation() {
         placeholder="Write a message"
       />
       <Button
-        label="Send demo message"
+        label="Send message"
         disabled={!text.trim()}
         onPress={() => {
           sendMessage(c.id, text.trim());
