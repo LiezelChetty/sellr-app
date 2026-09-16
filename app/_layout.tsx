@@ -41,6 +41,7 @@ function Gate() {
         <Stack.Screen name="saved" options={{ title: "Saved items" }} />
         <Stack.Screen name="my-listings" options={{ title: "My listings" }} />
         <Stack.Screen name="my-sales" options={{ title: "My sales" }} />
+        <Stack.Screen name="location" options={{ title: "Selling location" }} />
       </Stack>
     </>
   );

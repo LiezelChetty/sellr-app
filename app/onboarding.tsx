@@ -11,7 +11,8 @@ import {
   Screen,
   styles,
 } from "../src/components/ui";
-import { COUNTRIES, IRISH_COUNTIES } from "../src/config/regions";
+import { COUNTRIES, getDefaultLocation } from "../src/config/regions";
+import { LocationSelector } from "../src/components/LocationSelector";
 import { useAppStore } from "../src/store/AppStore";
 import { CountryCode } from "../src/types/domain";
 import { colors } from "../src/theme";
@@ -20,7 +21,7 @@ export default function Onboarding() {
   const { completeOnboarding } = useAppStore();
   const [step, setStep] = useState(0);
   const [country, setCountry] = useState<CountryCode>("IE");
-  const [county, setCounty] = useState("Waterford");
+  const [region, setRegion] = useState("Waterford");
   const [town, setTown] = useState("Waterford City");
   return (
     <Screen>
@@ -101,36 +102,21 @@ export default function Onboarding() {
                     key={c.code}
                     label={c.name}
                     active={country === c.code}
-                    onPress={() => setCountry(c.code)}
+                    onPress={() => {
+                      const next = getDefaultLocation(c.code);
+                      setCountry(c.code);
+                      setRegion(next.region);
+                      setTown(next.town);
+                    }}
                   />
                 ))}
               </View>
-              {country === "IE" ? (
-                <>
-                  <Text style={styles.h3}>County</Text>
-                  <View style={styles.wrap}>
-                    {IRISH_COUNTIES.slice(0, 5).map((c) => (
-                      <Pill
-                        key={c}
-                        label={c}
-                        active={county === c}
-                        onPress={() => setCounty(c)}
-                      />
-                    ))}
-                  </View>
-                </>
-              ) : (
-                <Field
-                  label="Region / state"
-                  value={county}
-                  onChangeText={setCounty}
-                />
-              )}
-              <Field
-                label="Town / City"
-                value={town}
-                onChangeText={setTown}
-                placeholder="Approximate area only"
+              <LocationSelector
+                country={country}
+                region={region}
+                town={town}
+                onRegionChange={setRegion}
+                onTownChange={setTown}
               />
               <View
                 style={[
@@ -162,11 +148,11 @@ export default function Onboarding() {
                 ? "Start using OfferMe"
                 : "Continue"
           }
-          disabled={step === 2 && (!county || !town)}
+          disabled={step === 2 && (!region || !town)}
           onPress={() => {
             if (step < 2) setStep(step + 1);
             else {
-              completeOnboarding(country, county, town);
+              completeOnboarding(country, region, town);
               router.replace("/(tabs)");
             }
           }}

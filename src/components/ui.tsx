@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, shadow } from "../theme";
 import { Listing } from "../types/domain";
-import OfficialOfferMeLogo from "../../assets/branding/offerme-logo.svg";
+const officialOfferMeLogo = require("../../assets/branding/offerme-logo-runtime.png");
 export function Screen({
   children,
   scroll = true,
@@ -44,7 +44,12 @@ export const Logo = () => (
     accessibilityLabel="OfferMe"
     style={styles.logoFrame}
   >
-    <OfficialOfferMeLogo width={70} height={56} />
+    <Image
+      source={officialOfferMeLogo}
+      accessibilityIgnoresInvertColors
+      resizeMode="contain"
+      style={styles.logoImage}
+    />
   </View>
 );
 export const Wordmark = Logo;
@@ -265,6 +270,10 @@ export const styles = StyleSheet.create({
     padding: 6,
     alignItems: "center",
     justifyContent: "center",
+  },
+  logoImage: {
+    width: 70,
+    height: 56,
   },
   header: { gap: 4, marginVertical: 5 },
   eyebrow: {

@@ -10,6 +10,7 @@ import {
   styles,
 } from "../../src/components/ui";
 import { CURRENT_USER_ID } from "../../src/data/demo";
+import { formatApproximateLocation } from "../../src/config/regions";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
 export default function Profile() {
@@ -17,6 +18,11 @@ export default function Profile() {
   const { preferences, profiles, listings, offers, favouriteIds, resetDemo } =
     useAppStore();
   const me = profiles.find((x) => x.id === CURRENT_USER_ID)!;
+  const broadLocation = formatApproximateLocation(
+    preferences.countryCode,
+    preferences.region,
+    preferences.town,
+  );
   const row = (
     icon: keyof typeof Ionicons.glyphMap,
     label: string,
@@ -43,7 +49,7 @@ export default function Profile() {
       <Logo />
       <Header
         title={me.displayName}
-        subtitle={`${preferences.town}, ${preferences.county} · Demo profile`}
+        subtitle={`${broadLocation} · Demo profile`}
       />
       <DemoTag />
       <Card>
@@ -83,15 +89,8 @@ export default function Profile() {
         )}
       </Card>
       <Card>
-        {row(
-          "location-outline",
-          "Selling location",
-          `${preferences.town}, ${preferences.county}`,
-          () =>
-            Alert.alert(
-              "Approximate location",
-              "Change location by resetting the demo and completing onboarding again.",
-            ),
+        {row("location-outline", "Selling location", broadLocation, () =>
+          router.push("/location"),
         )}
         <View style={styles.divider} />
         {row(

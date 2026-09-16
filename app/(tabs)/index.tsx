@@ -1,7 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
-import { CATEGORIES, REGIONS } from "../../src/config/regions";
+import {
+  CATEGORIES,
+  formatApproximateLocation,
+  isApproximateLocationInRegion,
+  REGIONS,
+} from "../../src/config/regions";
 import {
   DemoTag,
   ListingCard,
@@ -25,7 +30,27 @@ export default function Home() {
   const { listings, sales, preferences, favouriteIds, toggleFavourite } =
     useAppStore();
   const symbol = REGIONS[preferences.countryCode].symbol;
-  const live = listings.filter((x) => x.status === "LIVE");
+  const broadLocation = formatApproximateLocation(
+    preferences.countryCode,
+    preferences.region,
+    preferences.town,
+  );
+  const live = listings.filter(
+    (x) =>
+      x.status === "LIVE" &&
+      isApproximateLocationInRegion(
+        preferences.countryCode,
+        preferences.region,
+        x.approximateLocation,
+      ),
+  );
+  const nearbySales = sales.filter((sale) =>
+    isApproximateLocationInRegion(
+      preferences.countryCode,
+      preferences.region,
+      sale.approximateLocation,
+    ),
+  );
   return (
     <Screen>
       <View style={styles.between}>
@@ -37,11 +62,11 @@ export default function Home() {
             color={colors.greenDark}
           />
           <Text style={styles.h3}>
-            {preferences.town || preferences.county}
+            {preferences.town || preferences.region}
           </Text>
         </Pressable>
       </View>
-      <DemoTag />
+      <DemoTag text={`Regional development data · ${broadLocation}`} />
       <Pressable
         onPress={() => router.push("/(tabs)/browse")}
         style={[
@@ -83,7 +108,7 @@ export default function Home() {
         <Text style={styles.h2}>Garage sales near you</Text>
       </View>
       <View style={{ gap: 10 }}>
-        {sales.map((s) => (
+        {nearbySales.map((s) => (
           <Pressable
             key={s.id}
             onPress={() => router.push(`/sale/${s.id}`)}

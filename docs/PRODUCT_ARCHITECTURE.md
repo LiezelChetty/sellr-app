@@ -23,6 +23,8 @@ The mobile app depends on a typed `ItemAnalysisService`. Development uses clearl
 
 Only country, county/region and town/city belong in public discovery data. No public listing or seller profile field supports a street address, exact coordinates, email address or telephone number. Any later proximity feature needs consent, coarse-grained storage and a documented privacy review.
 
+Location choices are configuration-driven in `src/config/regions.ts`. Each launch country defines its currency, region terminology, regions and a replaceable V1 list of major population centres. The United States configuration covers all 50 states plus Washington, D.C. Onboarding and Profile settings share the same dependent selector, and `formatApproximateLocation` produces public town/region labels without coordinates.
+
 ## Safety and moderation
 
 The types and schema support reporting listings/users and blocking users. Before public launch, implement authenticated submission, evidence retention rules, moderator tooling, appeal flows, abuse/rate limiting, prohibited-item policy enforcement, message safety, user data export/deletion and emergency escalation procedures. Ratings are deliberately absent.
@@ -30,3 +32,5 @@ The types and schema support reporting listings/users and blocking users. Before
 ## Local demo versus production
 
 Seed listings, profiles, offers and messages are labelled demo data. Local actions persist through AsyncStorage and reach no other person. Production requires Supabase Auth, Storage, RLS-tested repositories, realtime conversations, push notifications, server-side moderation, media processing, search and operational monitoring.
+
+Regional development data is generated from the configured country, region and town. Changing location rebuilds demo listings, seller profiles, clear-outs, offers and currencies for that broad area, while preserving non-demo local activity. Home and Browse only treat content in the configured region as “near you”; the development data is explicitly labelled in the UI.

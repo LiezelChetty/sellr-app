@@ -1,37 +1,43 @@
 import {
   ClearoutSale,
   Conversation,
+  CountryCode,
   Listing,
   Offer,
   SellerProfile,
 } from "../types/domain";
+import {
+  formatApproximateLocation,
+  getCities,
+  REGIONS,
+} from "../config/regions";
 export const CURRENT_USER_ID = "demo-user";
 export const DEMO_PROFILES: SellerProfile[] = [
   {
     id: CURRENT_USER_ID,
     displayName: "Liezel",
-    approximateLocation: "Waterford City",
+    approximateLocation: "Waterford City, Waterford",
     memberSince: "2026-09-01",
     isDemo: true,
   },
   {
     id: "sarah",
     displayName: "Sarah",
-    approximateLocation: "Tramore",
+    approximateLocation: "Tramore, Waterford",
     memberSince: "2026-05-12",
     isDemo: true,
   },
   {
     id: "tom",
     displayName: "Tom",
-    approximateLocation: "Dungarvan",
+    approximateLocation: "Dungarvan, Waterford",
     memberSince: "2026-02-08",
     isDemo: true,
   },
   {
     id: "aoife",
     displayName: "Aoife",
-    approximateLocation: "Waterford City",
+    approximateLocation: "Waterford City, Waterford",
     memberSince: "2026-07-18",
     isDemo: true,
   },
@@ -88,7 +94,7 @@ export const DEMO_LISTINGS: Listing[] = [
     "Coffee machine",
     25,
     "Home",
-    "Waterford City",
+    "Waterford City, Waterford",
     "sarah",
     img.coffee,
     "sale-sarah",
@@ -98,7 +104,7 @@ export const DEMO_LISTINGS: Listing[] = [
     "Nike trainers",
     35,
     "Fashion",
-    "Waterford City",
+    "Waterford City, Waterford",
     "sarah",
     img.shoes,
     "sale-sarah",
@@ -108,7 +114,7 @@ export const DEMO_LISTINGS: Listing[] = [
     "Kids clothes bundle",
     20,
     "Kids",
-    "Tramore",
+    "Tramore, Waterford",
     "aoife",
     img.kids,
     "sale-kids",
@@ -118,18 +124,26 @@ export const DEMO_LISTINGS: Listing[] = [
     "Oak side table",
     30,
     "Home",
-    "Waterford City",
+    "Waterford City, Waterford",
     "sarah",
     img.table,
     "sale-sarah",
   ),
-  base("demo-5", "Bedside lamp", 12, "Home", "Dungarvan", "tom", img.lamp),
+  base(
+    "demo-5",
+    "Bedside lamp",
+    12,
+    "Home",
+    "Dungarvan, Waterford",
+    "tom",
+    img.lamp,
+  ),
   base(
     "demo-6",
     "Air fryer",
     40,
     "Electronics",
-    "Tramore",
+    "Tramore, Waterford",
     "aoife",
     img.fryer,
     "sale-kids",
@@ -139,7 +153,7 @@ export const DEMO_LISTINGS: Listing[] = [
     "Baby high chair",
     15,
     "Kids",
-    "Waterford City",
+    "Waterford City, Waterford",
     "aoife",
     img.chair,
     "sale-kids",
@@ -149,7 +163,7 @@ export const DEMO_LISTINGS: Listing[] = [
     "Desk chair",
     20,
     "Home",
-    "Waterford City",
+    "Waterford City, Waterford",
     CURRENT_USER_ID,
     img.chair,
     "sale-liezel",
@@ -161,7 +175,7 @@ export const DEMO_SALES: ClearoutSale[] = [
     sellerId: CURRENT_USER_ID,
     title: "Liezel’s Clear-Out",
     description: "A few useful things ready for a new home.",
-    approximateLocation: "Waterford City",
+    approximateLocation: "Waterford City, Waterford",
     coverImage: img.chair,
     itemCount: 1,
     createdAt: new Date().toISOString(),
@@ -173,7 +187,7 @@ export const DEMO_SALES: ClearoutSale[] = [
     sellerId: "sarah",
     title: "Sarah’s Moving Sale",
     description: "Useful home items looking for a new home.",
-    approximateLocation: "Waterford City",
+    approximateLocation: "Waterford City, Waterford",
     coverImage: img.coffee,
     itemCount: 3,
     createdAt: new Date().toISOString(),
@@ -185,7 +199,7 @@ export const DEMO_SALES: ClearoutSale[] = [
     sellerId: "aoife",
     title: "Kids Stuff Clear-Out",
     description: "Clothes and equipment our family has outgrown.",
-    approximateLocation: "Tramore",
+    approximateLocation: "Tramore, Waterford",
     coverImage: img.kids,
     itemCount: 3,
     createdAt: new Date().toISOString(),
@@ -257,3 +271,74 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
     ],
   },
 ];
+
+export interface DemoMarketplaceData {
+  profiles: SellerProfile[];
+  listings: Listing[];
+  sales: ClearoutSale[];
+  offers: Offer[];
+  conversations: Conversation[];
+}
+
+/**
+ * Builds clearly demo-only marketplace data for the user's configured broad
+ * area. This is intentionally a replaceable development-data boundary, not a
+ * claim that these sellers or items exist in the selected location.
+ */
+export function getRegionalDemoMarketplace(
+  countryCode: CountryCode,
+  region: string,
+  town: string,
+): DemoMarketplaceData {
+  const configuredCities = getCities(countryCode, region);
+  const cities = [town, ...configuredCities.filter((city) => city !== town)];
+  const locations = Array.from({ length: 4 }, (_, index) =>
+    formatApproximateLocation(
+      countryCode,
+      region,
+      cities[index % cities.length] ?? town,
+    ),
+  );
+  const currency = REGIONS[countryCode].currency;
+  const listingLocations = [
+    locations[0],
+    locations[0],
+    locations[1],
+    locations[0],
+    locations[2],
+    locations[1],
+    locations[0],
+    locations[0],
+  ];
+
+  const profiles = DEMO_PROFILES.map((profile, index) => ({
+    ...profile,
+    approximateLocation: locations[index % locations.length],
+  }));
+  const listings = DEMO_LISTINGS.map((listing, index) => ({
+    ...listing,
+    currency,
+    approximateLocation: listingLocations[index],
+  }));
+  const saleLocations: Record<string, string> = {
+    "sale-liezel": locations[0],
+    "sale-sarah": locations[0],
+    "sale-kids": locations[1],
+  };
+  const sales = DEMO_SALES.map((sale) => ({
+    ...sale,
+    approximateLocation: saleLocations[sale.id] ?? locations[0],
+  }));
+  const offers = DEMO_OFFERS.map((offer) => ({ ...offer, currency }));
+
+  return {
+    profiles,
+    listings,
+    sales,
+    offers,
+    conversations: DEMO_CONVERSATIONS.map((conversation) => ({
+      ...conversation,
+      messages: conversation.messages.map((message) => ({ ...message })),
+    })),
+  };
+}

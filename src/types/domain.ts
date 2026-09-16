@@ -15,7 +15,7 @@ export type OfferStatus =
 export interface UserPreferences {
   onboarded: boolean;
   countryCode: CountryCode;
-  county: string;
+  region: string;
   town: string;
 }
 export interface SellerProfile {

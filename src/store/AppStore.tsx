@@ -14,8 +14,9 @@ import {
   DEMO_OFFERS,
   DEMO_PROFILES,
   DEMO_SALES,
+  getRegionalDemoMarketplace,
 } from "../data/demo";
-import { REGIONS } from "../config/regions";
+import { formatApproximateLocation, REGIONS } from "../config/regions";
 import {
   AIAnalysis,
   ClearoutSale,
@@ -31,7 +32,7 @@ const STORAGE_KEY = "offerme.v1.state";
 const initialPreferences: UserPreferences = {
   onboarded: false,
   countryCode: "IE",
-  county: "Waterford",
+  region: "Waterford",
   town: "Waterford City",
 };
 interface StoreValue {
@@ -45,9 +46,10 @@ interface StoreValue {
   favouriteIds: string[];
   completeOnboarding(
     countryCode: CountryCode,
-    county: string,
+    region: string,
     town: string,
   ): void;
+  updateLocation(countryCode: CountryCode, region: string, town: string): void;
   addListing(input: AIAnalysis & { photos: string[]; saleId?: string }): string;
   addSale(title: string, description: string, listingIds: string[]): string;
   toggleFavourite(id: string): void;
@@ -64,7 +66,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
   const [preferences, setPreferences] = useState(initialPreferences);
   const [listings, setListings] = useState(DEMO_LISTINGS);
   const [sales, setSales] = useState(DEMO_SALES);
-  const [profiles] = useState(DEMO_PROFILES);
+  const [profiles, setProfiles] = useState(DEMO_PROFILES);
   const [offers, setOffers] = useState(DEMO_OFFERS);
   const [conversations, setConversations] = useState(DEMO_CONVERSATIONS);
   const [favouriteIds, setFavouriteIds] = useState<string[]>(["demo-2"]);
@@ -73,11 +75,40 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       .then((raw) => {
         if (raw) {
           const s = JSON.parse(raw);
-          setPreferences(s.preferences ?? initialPreferences);
-          setListings(s.listings ?? DEMO_LISTINGS);
-          setSales(s.sales ?? DEMO_SALES);
-          setOffers(s.offers ?? DEMO_OFFERS);
-          setConversations(s.conversations ?? DEMO_CONVERSATIONS);
+          const savedPreferences = s.preferences ?? initialPreferences;
+          const hydratedPreferences = {
+            ...initialPreferences,
+            ...savedPreferences,
+            region:
+              savedPreferences.region ??
+              savedPreferences.county ??
+              initialPreferences.region,
+          };
+          const regionalDemo = getRegionalDemoMarketplace(
+            hydratedPreferences.countryCode,
+            hydratedPreferences.region,
+            hydratedPreferences.town,
+          );
+          setPreferences(hydratedPreferences);
+          setProfiles(regionalDemo.profiles);
+          setListings([
+            ...regionalDemo.listings,
+            ...(s.listings ?? []).filter((listing: Listing) => !listing.isDemo),
+          ]);
+          setSales([
+            ...regionalDemo.sales,
+            ...(s.sales ?? []).filter((sale: ClearoutSale) => !sale.isDemo),
+          ]);
+          setOffers([
+            ...regionalDemo.offers,
+            ...(s.offers ?? []).filter((offer: Offer) => !offer.isDemo),
+          ]);
+          setConversations([
+            ...regionalDemo.conversations,
+            ...(s.conversations ?? []).filter(
+              (conversation: Conversation) => !conversation.isDemo,
+            ),
+          ]);
           setFavouriteIds(s.favouriteIds ?? []);
         }
       })
@@ -105,6 +136,30 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     conversations,
     favouriteIds,
   ]);
+  const applyRegionalDemo = (
+    countryCode: CountryCode,
+    region: string,
+    town: string,
+  ) => {
+    const regionalDemo = getRegionalDemoMarketplace(countryCode, region, town);
+    setProfiles(regionalDemo.profiles);
+    setListings((current) => [
+      ...regionalDemo.listings,
+      ...current.filter((listing) => !listing.isDemo),
+    ]);
+    setSales((current) => [
+      ...regionalDemo.sales,
+      ...current.filter((sale) => !sale.isDemo),
+    ]);
+    setOffers((current) => [
+      ...regionalDemo.offers,
+      ...current.filter((offer) => !offer.isDemo),
+    ]);
+    setConversations((current) => [
+      ...regionalDemo.conversations,
+      ...current.filter((conversation) => !conversation.isDemo),
+    ]);
+  };
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -115,8 +170,19 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
       offers,
       conversations,
       favouriteIds,
-      completeOnboarding: (countryCode, county, town) =>
-        setPreferences({ onboarded: true, countryCode, county, town }),
+      completeOnboarding: (countryCode, region, town) => {
+        setPreferences({ onboarded: true, countryCode, region, town });
+        applyRegionalDemo(countryCode, region, town);
+      },
+      updateLocation: (countryCode, region, town) => {
+        setPreferences((current) => ({
+          ...current,
+          countryCode,
+          region,
+          town,
+        }));
+        applyRegionalDemo(countryCode, region, town);
+      },
       addListing: (input) => {
         const id = `listing-${Date.now()}`;
         setListings((x) => [
@@ -127,7 +193,11 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
             askingPrice: input.suggestedPrice,
             currency: REGIONS[preferences.countryCode].currency,
             status: "LIVE",
-            approximateLocation: preferences.town || preferences.county,
+            approximateLocation: formatApproximateLocation(
+              preferences.countryCode,
+              preferences.region,
+              preferences.town,
+            ),
             createdAt: new Date().toISOString(),
           },
           ...x,
@@ -144,7 +214,11 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
             sellerId: CURRENT_USER_ID,
             title,
             description,
-            approximateLocation: preferences.town || preferences.county,
+            approximateLocation: formatApproximateLocation(
+              preferences.countryCode,
+              preferences.region,
+              preferences.town,
+            ),
             coverImage,
             itemCount: listingIds.length,
             createdAt: new Date().toISOString(),
@@ -244,11 +318,17 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
           ),
         ),
       resetDemo: () => {
+        const regionalDemo = getRegionalDemoMarketplace(
+          initialPreferences.countryCode,
+          initialPreferences.region,
+          initialPreferences.town,
+        );
         setPreferences(initialPreferences);
-        setListings(DEMO_LISTINGS);
-        setSales(DEMO_SALES);
-        setOffers(DEMO_OFFERS);
-        setConversations(DEMO_CONVERSATIONS);
+        setProfiles(regionalDemo.profiles);
+        setListings(regionalDemo.listings);
+        setSales(regionalDemo.sales);
+        setOffers(regionalDemo.offers);
+        setConversations(regionalDemo.conversations);
         setFavouriteIds(["demo-2"]);
         AsyncStorage.removeItem(STORAGE_KEY);
       },

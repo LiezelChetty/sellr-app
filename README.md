@@ -6,7 +6,7 @@ This repository was pivoted from the earlier foundation and remains at `LiezelCh
 
 ## What works locally
 
-- Privacy-conscious onboarding with country, county/region and town/city
+- Privacy-conscious, configuration-driven country → region → town/city selection in onboarding and Profile settings
 - Image-led Home discovery, Browse search/filters, demo clear-outs and local listings
 - Original-photo capture and multi-photo selection
 - Typed AI boundary with an explicitly labelled deterministic mock
@@ -66,7 +66,7 @@ Only country, county/region and town/city are public. OfferMe does not request p
 
 ## Branding and package status
 
-The original approved OfferMe SVG is stored unchanged in `assets/branding/offerme-logo.svg` and rendered directly throughout the app. Expo icon, adaptive icon, splash and favicon PNGs are proportional canvas renders of that source with clear space; the artwork is not redrawn, recoloured, traced or given a tagline. Regenerate them with `npm run brand:assets`.
+The original approved OfferMe SVG is stored unchanged in `assets/branding/offerme-logo.svg` as the master artwork. The cross-platform UI uses a proportional PNG runtime render through React Native's static-image API. Expo icon, adaptive icon, splash and favicon PNGs are generated from that source with appropriate clear space; the artwork is not redrawn, recoloured, traced or given a tagline. Regenerate them with `npm run brand:assets`.
 
 The visible name, slug and URL scheme are `OfferMe` / `offerme`. Android intentionally remains `com.designovation.sellr` to avoid casually changing a potentially registered identifier. `com.designovation.offerme` is proposed after ownership and store records are confirmed. No iOS bundle identifier is explicitly set.
 
