@@ -1,76 +1,100 @@
 export type CountryCode = "IE" | "GB" | "ZA" | "US" | "AU";
-export type MarketplaceCapability =
-  | "PREPARE_ONLY"
-  | "HANDOFF"
-  | "OAUTH_AVAILABLE"
-  | "DIRECT_PUBLISH"
-  | "SYNC"
-  | "DELIST";
-export type MarketplaceConnectionStatus =
-  | "NOT_SETUP"
-  | "MOCK_CONNECTED"
-  | "AVAILABLE"
-  | "UNAVAILABLE";
-export type ListingStatus = "DRAFT" | "READY" | "LIVE" | "SOLD";
-
-export interface Marketplace {
-  id: string;
-  name: string;
-  summary: string;
-  capabilities: MarketplaceCapability[];
-  handoffUrl?: string;
-}
-export interface MarketplaceRegion {
+export type ListingStatus =
+  | "DRAFT"
+  | "LIVE"
+  | "OFFER_ACCEPTED"
+  | "SOLD"
+  | "ARCHIVED";
+export type OfferStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "DECLINED"
+  | "COUNTERED"
+  | "WITHDRAWN"
+  | "EXPIRED";
+export interface UserPreferences {
+  onboarded: boolean;
   countryCode: CountryCode;
-  marketplaceIds: string[];
-  currency: string;
-  symbol: string;
+  county: string;
+  town: string;
 }
-export interface MarketplaceConnection {
-  marketplaceId: string;
-  status: MarketplaceConnectionStatus;
-  isMock: boolean;
+export interface SellerProfile {
+  id: string;
+  displayName: string;
+  avatarUrl?: string;
+  approximateLocation: string;
+  memberSince: string;
+  isDemo?: boolean;
 }
 export interface AIAnalysis {
   title: string;
-  brand: string;
   category: string;
   subcategory: string;
-  size: string;
+  brand: string;
   condition: string;
-  colour: string;
   description: string;
-  suggestedPriceLow: number;
-  suggestedPriceHigh: number;
-  recommendedPrice: number;
-  confidence: number;
-}
-export interface MarketplaceListing {
-  id: string;
-  masterListingId: string;
-  marketplaceId: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
+  suggestedPrice: number;
+  priceConfidence: number;
   tags: string[];
-  photoOrder: string[];
-  marketplaceNotes: string;
-  status: ListingStatus;
-  externalId?: string;
 }
-export interface MasterListing extends AIAnalysis {
+export interface Listing extends AIAnalysis {
   id: string;
+  sellerId: string;
+  saleId?: string;
   photos: string[];
-  marketplaceListings: MarketplaceListing[];
+  askingPrice: number;
+  currency: string;
+  approximateLocation: string;
+  status: ListingStatus;
   createdAt: string;
   soldAt?: string;
-  salePrice?: number;
-  soldMarketplaceId?: string;
-  saleNotes?: string;
+  isDemo?: boolean;
 }
-export interface UserPreferences {
-  onboarded: boolean;
-  clearOutCategories: string[];
-  countryCode: CountryCode;
+export interface ClearoutSale {
+  id: string;
+  sellerId: string;
+  title: string;
+  description: string;
+  approximateLocation: string;
+  coverImage?: string;
+  itemCount: number;
+  createdAt: string;
+  status: "DRAFT" | "LIVE" | "ENDED";
+  isDemo?: boolean;
+}
+export interface Offer {
+  id: string;
+  listingIds: string[];
+  buyerId: string;
+  sellerId: string;
+  amount: number;
+  currency: string;
+  status: OfferStatus;
+  createdAt: string;
+  updatedAt: string;
+  message?: string;
+  parentOfferId?: string;
+  isDemo?: boolean;
+}
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+  isDemo?: boolean;
+}
+export interface Conversation {
+  id: string;
+  memberIds: string[];
+  listingId?: string;
+  offerId?: string;
+  messages: Message[];
+  updatedAt: string;
+  isDemo?: boolean;
+}
+export interface ReportInput {
+  targetType: "LISTING" | "USER";
+  targetId: string;
+  reason: string;
 }

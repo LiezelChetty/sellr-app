@@ -1,3 +1,5 @@
-# Temporary branding
+# OfferMe brand assets
 
-SELLR currently uses a text-only wordmark rendered by the app. Replace the Expo icons and this directory with approved brand assets when the final SVG and app icon are supplied. No permanent logo artwork is included.
+The pivot brief refers to supplied OfferMe SVG and icon artwork, but no logo file was present in the supplied attachment or repository. The app therefore uses a temporary text treatment and deliberately does not redraw or generate the logo.
+
+Before a production build, place the approved files here and update `Logo` plus the `icon`, `adaptiveIcon`, `splash` and `favicon` paths in `app.json`. Existing bitmap assets are Expo development placeholders and must not ship publicly.

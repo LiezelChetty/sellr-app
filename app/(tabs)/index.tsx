@@ -1,138 +1,132 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, Text, TextInput, View } from "react-native";
+import { CATEGORIES, REGIONS } from "../../src/config/regions";
 import {
-  Button,
-  Card,
-  DemoBanner,
-  Empty,
-  money,
+  DemoTag,
+  ListingCard,
+  Logo,
   Screen,
   styles,
-  Wordmark,
 } from "../../src/components/ui";
-import { REGIONS } from "../../src/config/marketplaces";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
-
+const categoryIcons: (keyof typeof Ionicons.glyphMap)[] = [
+  "home-outline",
+  "happy-outline",
+  "shirt-outline",
+  "phone-portrait-outline",
+  "leaf-outline",
+  "football-outline",
+  "grid-outline",
+];
 export default function Home() {
   const router = useRouter();
-  const { listings, preferences } = useAppStore();
+  const { listings, sales, preferences, favouriteIds, toggleFavourite } =
+    useAppStore();
   const symbol = REGIONS[preferences.countryCode].symbol;
-  const sold = listings.filter((x) => x.soldAt);
-  const active = listings.filter((x) => !x.soldAt);
+  const live = listings.filter((x) => x.status === "LIVE");
   return (
     <Screen>
-      <Wordmark />
-      <Text style={styles.h1}>Ready to make some space?</Text>
-      <DemoBanner />
-      <Card style={{ backgroundColor: colors.green, paddingVertical: 24 }}>
-        <Text style={{ color: "#CFE0D7", fontWeight: "800", letterSpacing: 1 }}>
-          START HERE
-        </Text>
-        <Text style={{ color: colors.white, fontSize: 26, fontWeight: "900" }}>
-          Turn clutter into cash.
-        </Text>
-        <Text style={{ color: "#E3ECE7", fontSize: 15 }}>
-          Photograph once. SELLR does the preparation.
-        </Text>
-        <Button
-          label="SELL SOMETHING"
-          icon="camera-outline"
-          variant="secondary"
-          onPress={() => router.push("/sell")}
-        />
-            <Button
-              label="Choose from Photos"
-              icon="images-outline"
-              variant="secondary"
-              onPress={() => router.push("/sell?source=library")}
-            />
-      </Card>
-      <View style={[styles.wrap, { justifyContent: "space-between" }]}>
-        {[
+      <View style={styles.between}>
+        <Logo />
+        <Pressable style={styles.row}>
+          <Ionicons
+            name="location-outline"
+            size={18}
+            color={colors.greenDark}
+          />
+          <Text style={styles.h3}>
+            {preferences.town || preferences.county}
+          </Text>
+        </Pressable>
+      </View>
+      <DemoTag />
+      <Pressable
+        onPress={() => router.push("/(tabs)/browse")}
+        style={[
+          styles.row,
           {
-            l: "Potential Value",
-            v: money(
-              symbol,
-              active.reduce((a, b) => a + b.recommendedPrice, 0),
-            ),
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.line,
+            borderRadius: 15,
+            paddingHorizontal: 14,
+            minHeight: 49,
           },
-          {
-            l: "Money Made",
-            v: money(
-              symbol,
-              sold.reduce((a, b) => a + (b.salePrice ?? 0), 0),
-            ),
-          },
-          { l: "Active Listings", v: String(active.length) },
-          { l: "Items Sold", v: String(sold.length) },
-        ].map((s) => (
-          <Card key={s.l} style={styles.stat}>
-            <Text style={styles.small}>{s.l}</Text>
-            <Text style={styles.statValue}>{s.v}</Text>
-          </Card>
+        ]}
+      >
+        <Ionicons name="search" size={20} color={colors.muted} />
+        <Text style={styles.subtitle}>What are you looking for?</Text>
+      </Pressable>
+      <View style={styles.between}>
+        <Text style={styles.h2}>Near you</Text>
+        <Pressable onPress={() => router.push("/(tabs)/browse")}>
+          <Text style={{ fontWeight: "800", color: colors.greenDark }}>
+            See all
+          </Text>
+        </Pressable>
+      </View>
+      <View style={styles.wrap}>
+        {live.slice(0, 4).map((l) => (
+          <ListingCard
+            key={l.id}
+            listing={l}
+            symbol={symbol}
+            favourite={favouriteIds.includes(l.id)}
+            onFavourite={() => toggleFavourite(l.id)}
+            onPress={() => router.push(`/item/${l.id}`)}
+          />
         ))}
       </View>
-      <Card style={{ backgroundColor: "#EBDCC9" }}>
-        <View style={styles.between}>
-          <View style={{ flex: 1, gap: 7 }}>
-            <Text style={styles.h2}>Find {symbol}100 in your home</Text>
-            <Text style={styles.body}>
-              Start scanning things you no longer use and see what they could be
-              worth.
-            </Text>
-          </View>
-          <Ionicons name="flag-outline" size={32} color={colors.green} />
-        </View>
-        <Button
-          label="Start a Clear-Out"
-          variant="secondary"
-          onPress={() => router.push("/sell")}
-        />
-      </Card>
       <View style={styles.between}>
-        <Text style={styles.h2}>Recent items</Text>
-        {listings.length ? (
-          <Pressable onPress={() => router.push("/(tabs)/items")}>
-            <Text style={{ color: colors.green, fontWeight: "800" }}>
-              See all
-            </Text>
-          </Pressable>
-        ) : null}
+        <Text style={styles.h2}>Garage sales near you</Text>
       </View>
-      {!listings.length ? (
-        <Empty
-          title="Your clear-out starts here"
-          body="Items you prepare will appear here."
-        />
-      ) : (
-        listings.slice(0, 3).map((item) => (
+      <View style={{ gap: 10 }}>
+        {sales.map((s) => (
           <Pressable
-            key={item.id}
-            onPress={() => router.push(`/item/${item.id}`)}
+            key={s.id}
+            onPress={() => router.push(`/sale/${s.id}`)}
+            style={[styles.card, { padding: 0, overflow: "hidden" }]}
           >
-            <Card style={styles.row}>
-              {item.photos[0] ? (
-                <Image
-                  source={{ uri: item.photos[0] }}
-                  style={{ width: 62, height: 62, borderRadius: 14 }}
-                />
-              ) : (
-                <Ionicons name="image-outline" size={30} />
-              )}
-              <View style={{ flex: 1 }}>
-                <Text style={styles.h3}>{item.title}</Text>
-                <Text style={styles.small}>
-                  {money(symbol, item.recommendedPrice)} ·{" "}
-                  {item.marketplaceListings.length} marketplaces
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.muted} />
-            </Card>
+            <Image
+              source={{ uri: s.coverImage }}
+              style={{ width: "100%", height: 145 }}
+            />
+            <View style={{ padding: 13, gap: 3 }}>
+              <Text style={styles.h2}>{s.title}</Text>
+              <Text style={styles.small}>
+                {s.approximateLocation} · {s.itemCount} items · DEMO
+              </Text>
+            </View>
           </Pressable>
-        ))
-      )}
+        ))}
+      </View>
+      <Text style={styles.h2}>Categories</Text>
+      <View style={styles.wrap}>
+        {CATEGORIES.map((c, i) => (
+          <Pressable
+            key={c}
+            onPress={() => router.push(`/(tabs)/browse?category=${c}`)}
+            style={{
+              width: "31%",
+              minHeight: 80,
+              borderRadius: 15,
+              backgroundColor: i % 2 ? colors.greenSoft : "#FFF3C7",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            <Ionicons
+              name={categoryIcons[i]}
+              size={24}
+              color={colors.greenDark}
+            />
+            <Text style={styles.h3}>{c}</Text>
+          </Pressable>
+        ))}
+      </View>
     </Screen>
   );
 }

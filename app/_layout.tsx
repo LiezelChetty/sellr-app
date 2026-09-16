@@ -4,7 +4,6 @@ import { StatusBar } from "expo-status-bar";
 import { AppStoreProvider, useAppStore } from "../src/store/AppStore";
 import { Loading } from "../src/components/ui";
 import { colors } from "../src/theme";
-
 function Gate() {
   const { ready, preferences } = useAppStore();
   const segments = useSegments();
@@ -23,7 +22,7 @@ function Gate() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.canvas },
           headerShadowVisible: false,
-          headerTintColor: colors.green,
+          headerTintColor: colors.greenDark,
           headerTitleStyle: { fontWeight: "800" },
           contentStyle: { backgroundColor: colors.canvas },
         }}
@@ -31,10 +30,17 @@ function Gate() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="sell" options={{ headerShown: false }} />
-        <Stack.Screen name="item/[id]" options={{ title: "Item details" }} />
-        <Stack.Screen name="accounts" options={{ title: "Selling accounts" }} />
-        <Stack.Screen name="plans" options={{ title: "Plans & credits" }} />
-        <Stack.Screen name="region" options={{ title: "Selling region" }} />
+        <Stack.Screen name="item/[id]" options={{ title: "Listing" }} />
+        <Stack.Screen name="offer/[id]" options={{ title: "Offer" }} />
+        <Stack.Screen
+          name="conversation/[id]"
+          options={{ title: "Messages" }}
+        />
+        <Stack.Screen name="sale/[id]" options={{ title: "Garage sale" }} />
+        <Stack.Screen name="seller/[id]" options={{ title: "Seller" }} />
+        <Stack.Screen name="saved" options={{ title: "Saved items" }} />
+        <Stack.Screen name="my-listings" options={{ title: "My listings" }} />
+        <Stack.Screen name="my-sales" options={{ title: "My sales" }} />
       </Stack>
     </>
   );

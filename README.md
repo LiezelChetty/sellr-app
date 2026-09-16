@@ -1,18 +1,33 @@
-# SELLR
+# OfferMe
 
-SELLR is Designovation's mobile-first selling assistant: **One item. Every marketplace.** A seller photographs an item once, reviews one canonical Master Listing, and prepares editable marketplace-specific drafts for the places relevant to their country.
+OfferMe is an AI-assisted local marketplace with the simplicity of an online garage sale. Photograph unwanted things, review prepared listings, group them into a clear-out, and receive offers from people in your broad local area.
 
-This repository is the production-quality V1 foundation. It intentionally does not scrape, automate unsupported marketplaces, collect marketplace passwords, fake OAuth, or claim to publish/delist anything.
+This repository was pivoted from the earlier foundation and remains at `LiezelChetty/sellr-app`. The current app no longer presents external marketplace publishing or account connections.
 
-## Stack
+## What works locally
 
-- React Native + Expo 57 + TypeScript
-- Expo Router
-- AsyncStorage-backed local demo state
-- Supabase client boundary and SQL migration with RLS
-- Android first; iOS and web compatible
+- Privacy-conscious onboarding with country, county/region and town/city
+- Image-led Home discovery, Browse search/filters, demo clear-outs and local listings
+- Original-photo capture and multi-photo selection
+- Typed AI boundary with an explicitly labelled deterministic mock
+- Editable listing details and asking-price guidance
+- Public item, clear-out and seller pages using approximate location only
+- Saved listings, offers with counter/accept/decline, and demo conversations
+- My Listings and manual sold status
+- Safety guidance plus report/block service boundaries
+- AsyncStorage persistence and Supabase-ready migrations with RLS foundations
 
-## Run locally
+## Transaction boundary
+
+OfferMe facilitates discovery, listings, offers and messages. **There is no in-app payment, escrow, wallet, buyer protection, courier, shipping label, parcel tracking, collection scheduling or home-address sharing.** An accepted offer does not mean a payment or transaction was completed. Buyer and seller arrange payment and handover independently.
+
+## Demo honesty
+
+Profiles, listings, clear-outs, offers and conversations bundled with the app are labelled development data. Local actions do not reach real users. Mock AI returns a deterministic Coffee Machine example; it never claims a provider analysed the photos. Seller photos remain unaltered.
+
+## Stack and run
+
+React Native, Expo SDK 57, TypeScript, Expo Router, AsyncStorage and a Supabase client seam.
 
 ```bash
 npm install
@@ -20,62 +35,42 @@ cp .env.example .env
 npm start
 ```
 
-Use `npm run android`, `npm run ios`, or `npm run web`. No environment variables are required for demo mode.
+Use `npm run android`, `npm run ios`, or `npm run web`. No credentials are needed for demo mode.
 
-## Architecture
+## Structure
 
 ```text
-app/                         Expo Router screens and tabs
-  (tabs)/                    Home, My Items, Sell, Insights, Profile
-  item/[id].tsx              Master listing, drafts, live/sold workflow
-src/
-  components/                Shared mobile UI primitives
-  config/                    Central marketplace regions and plan pricing
-  lib/                       Optional Supabase client
-  services/                  AI and marketplace connector boundaries
-  store/                     Persisted demo application state
-  types/                     Domain models
-supabase/migrations/         Database schema, seed configuration, RLS
-docs/MARKETPLACE_INTEGRATIONS.md
-assets/branding/             Placeholder-brand guidance only
+app/                         Discovery, selling, offers and message routes
+src/components/              OfferMe UI and image-led listing cards
+src/config/                  Regions, currencies and categories
+src/data/                    Clearly labelled development marketplace data
+src/services/                AI and safety boundaries
+src/store/                   Persisted local demo repository
+src/types/                   Listing, clear-out, offer and messaging models
+supabase/migrations/         Foundation and OfferMe pivot migrations
+docs/PRODUCT_ARCHITECTURE.md Privacy, transaction and backend boundaries
+assets/branding/             Approved-asset handoff location
 ```
 
-`MasterListing` holds canonical item information. Each `MarketplaceListing` references it and may be edited independently. Regional marketplace availability and pricing are central configuration, never scattered through screens.
+## Backend work required
 
-## Demo mode
+Production requires Supabase Auth and Storage, applied/tested migrations, RLS integration tests, repositories, search, private realtime conversations, push notifications, server-authoritative offer transitions, media moderation, abuse prevention, observability, data export/deletion and operational moderation tools. Messages must only be readable by conversation members.
 
-The complete local journey works without accounts: onboarding, manual region selection, camera/library photos, clearly labelled mock analysis, editable review, multi-marketplace drafts, copy/open handoff, manual `LIVE` status, sale recording, remaining-live warnings, earnings, accounts, and plan screens. Data persists on the device.
+AI requires an authenticated backend/Edge Function, server-held provider credentials, structured-output validation, moderation, rate limits and error handling. Never expose AI or service-role secrets through `EXPO_PUBLIC_*`.
 
-Mocked:
+Before public launch implement report review queues, moderator tooling, block enforcement, prohibited-item policies, content review, appeals, fraud/spam detection, retention policies and legal/privacy review. Ratings are deliberately absent.
 
-- AI analysis returns the documented Nike Air Max 270 example after a short local delay.
-- Marketplace connection states are explicitly development-only and not connected.
-- Marketplace drafts are generated locally.
-- Authentication, notifications, policies, and billing destinations are placeholders.
+## Location
 
-## Environment variables
+Only country, county/region and town/city are public. OfferMe does not request precise GPS and has no public street-address field. “Near you” means the configured broad area, not a measured distance.
 
-Only the public Supabase project URL and anonymous key may be exposed in Expo. Never put service-role keys, AI secrets, OAuth client secrets, or marketplace tokens in `EXPO_PUBLIC_*`. If Supabase values are absent, the app uses local demo storage.
+## Branding and package status
 
-## Backend and external requirements
+The request referenced approved OfferMe SVG/icon artwork, but no artwork file was present in the attachment or repository. The app uses a temporary text treatment and does not redraw the logo. Existing Expo bitmap placeholders must be replaced by approved assets before a public build.
 
-Supabase work still required: provision a project, apply the migration, configure Auth/Storage, build server-side OAuth/token encryption, replace the local repository, add Edge Functions, and add production audit/error handling.
+The visible name, slug and URL scheme are `OfferMe` / `offerme`. Android intentionally remains `com.designovation.sellr` to avoid casually changing a potentially registered identifier. `com.designovation.offerme` is proposed after ownership and store records are confirmed. No iOS bundle identifier is explicitly set.
 
-AI work still required: deploy a secure backend/Edge Function, choose a provider, validate structured output, implement rate limits/credits and failure handling, and store provider credentials only server-side.
-
-Marketplace work requires each marketplace's current developer terms, approval, credentials, scopes, sandbox testing, and an official API supporting the requested operation. Until then, SELLR remains preparation/handoff only. See [marketplace integration principles](docs/MARKETPLACE_INTEGRATIONS.md).
-
-Billing requires App Store / Google Play configuration and a production purchase service. Indicative prices are provisional and centralized in `src/config/plans.ts`.
-
-## Known limitations
-
-- V1 data and selected photo URIs are local to one device; photos are not uploaded.
-- Mock analysis always returns the same demo item and EUR-like example numbers, while the region symbol changes.
-- Handoff destinations may change; they must be checked before release.
-- No real auth, cloud sync, marketplace publishing/status/delisting, push notifications, purchases, or AI call is enabled.
-- Automated E2E/device tests are not yet included.
-
-## Quality checks
+## Checks
 
 ```bash
 npm run typecheck

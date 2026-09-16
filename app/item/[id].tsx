@@ -1,344 +1,280 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
-import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Image, Modal, Pressable, Text, View } from "react-native";
 import {
   Button,
   Card,
-  DemoBanner,
+  DemoTag,
   Field,
   Header,
+  ListingCard,
   money,
   Screen,
   styles,
 } from "../../src/components/ui";
-import { MARKETPLACES, REGIONS } from "../../src/config/marketplaces";
+import { CURRENT_USER_ID } from "../../src/data/demo";
+import { REGIONS } from "../../src/config/regions";
 import { useAppStore } from "../../src/store/AppStore";
-import { MarketplaceListing } from "../../src/types/domain";
 import { colors } from "../../src/theme";
-
-export default function ItemDetail() {
+export default function Item() {
   const { id, created } = useLocalSearchParams<{
     id: string;
     created?: string;
   }>();
   const router = useRouter();
-  const { listings, preferences, updateMarketplaceListing, markSold } =
-    useAppStore();
-  const item = listings.find((x) => x.id === id);
-  const [editing, setEditing] = useState<MarketplaceListing | null>(null);
-  const [sellOpen, setSellOpen] = useState(false);
-  const [soldMarket, setSoldMarket] = useState("");
-  const [salePrice, setSalePrice] = useState("");
-  const [notes, setNotes] = useState("");
-  if (!item)
+  const {
+    listings,
+    profiles,
+    preferences,
+    favouriteIds,
+    toggleFavourite,
+    createOffer,
+    startConversation,
+    markSold,
+  } = useAppStore();
+  const listing = listings.find((x) => x.id === id);
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [soldOpen, setSoldOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [message, setMessage] = useState("");
+  if (!listing)
     return (
       <Screen>
-        <Header title="Item not found" />
-        <Button
-          label="Back to My Items"
-          onPress={() => router.replace("/(tabs)/items")}
-        />
+        <Header title="Listing not found" />
       </Screen>
     );
+  const seller = profiles.find((x) => x.id === listing.sellerId)!;
   const symbol = REGIONS[preferences.countryCode].symbol;
-  const copyOpen = async (m: MarketplaceListing) => {
-    const market = MARKETPLACES[m.marketplaceId];
-    await Clipboard.setStringAsync(
-      `${m.title}\n\n${m.description}\n\n${symbol}${m.price}\n\n${m.tags.map((t) => `#${t.replace(/\s/g, "")}`).join(" ")}`,
-    );
-    Alert.alert(
-      "Listing copied",
-      `${market.name} draft copied. SELLR has not published it.`,
-      [
-        { text: "Stay here" },
-        {
-          text: `Open ${market.name}`,
-          onPress: () =>
-            market.handoffUrl && Linking.openURL(market.handoffUrl),
-        },
-      ],
-    );
-  };
-  const live = item.marketplaceListings.filter((m) => m.status === "LIVE");
-  const completeSale = () => {
-    if (!soldMarket || !Number(salePrice))
+  const mine = listing.sellerId === CURRENT_USER_ID;
+  const others = listings
+    .filter(
+      (x) =>
+        x.sellerId === listing.sellerId &&
+        x.id !== listing.id &&
+        x.status === "LIVE",
+    )
+    .slice(0, 2);
+  const sendOffer = () => {
+    if (!Number(amount))
       return Alert.alert(
-        "Add sale details",
-        "Choose where it sold and enter the sale price.",
+        "Enter an offer",
+        "Add the amount you would like to offer.",
       );
-    markSold(item.id, soldMarket, Number(salePrice), notes);
-    setSellOpen(false);
-    const remaining = live.filter((m) => m.marketplaceId !== soldMarket);
-    Alert.alert(
-      "Sold 🎉",
-      remaining.length
-        ? `This item may still be listed on:\n\n${remaining.map((m) => MARKETPLACES[m.marketplaceId].name).join("\n")}\n\nSELLR has not removed those listings.`
-        : "Sale recorded in SELLR.",
-    );
+    const offerId = createOffer(listing.id, Number(amount), message);
+    setOfferOpen(false);
+    router.push(`/offer/${offerId}`);
   };
+  const safety = () =>
+    Alert.alert(
+      "Report listing",
+      "Moderation submission is a backend-ready boundary in this demo. No report is sent.",
+    );
   return (
     <Screen>
       {created ? (
-        <Card style={{ backgroundColor: colors.greenSoft }}>
-          <Text style={styles.h2}>Drafts ready</Text>
-          <Text style={styles.body}>
-            Your master listing and marketplace versions were saved. Nothing has
-            been published.
+        <View
+          style={{
+            padding: 12,
+            borderRadius: 14,
+            backgroundColor: colors.greenSoft,
+          }}
+        >
+          <Text style={styles.h3}>
+            Your listing is live locally in this demo.
           </Text>
-        </Card>
+        </View>
       ) : null}
-      <DemoBanner />
-      <Header
-        eyebrow={item.soldAt ? "SOLD" : "MASTER LISTING"}
-        title={item.title}
-        subtitle={`${item.brand} · ${item.size} · ${item.condition}`}
-      />
+      {listing.isDemo ? (
+        <DemoTag text="Development listing — not a real seller" />
+      ) : null}
       <View style={styles.wrap}>
-        {item.photos.map((uri) => (
+        {listing.photos.map((uri) => (
           <Image
             key={uri}
             source={{ uri }}
-            style={{ width: 112, height: 112, borderRadius: 17 }}
+            style={{ width: "100%", height: 300, borderRadius: 18 }}
           />
         ))}
       </View>
-      <Card>
-        <View style={styles.between}>
-          <Text style={styles.h2}>
-            {money(symbol, item.salePrice ?? item.recommendedPrice)}
+      <View style={styles.between}>
+        <View style={{ flex: 1, gap: 3 }}>
+          <Text style={styles.h1}>{listing.title}</Text>
+          <Text style={{ fontSize: 28, fontWeight: "900" }}>
+            {money(symbol, listing.askingPrice)}
           </Text>
-          <Text
-            style={{
-              fontWeight: "900",
-              color: item.soldAt ? colors.accent : colors.success,
-            }}
-          >
-            {item.soldAt ? "SOLD" : "MASTER"}
+          <Text style={styles.subtitle}>
+            {listing.approximateLocation} · Approximate area
           </Text>
         </View>
-        <Text style={styles.body}>{item.description}</Text>
-        <View style={styles.divider} />
-        <Text style={styles.small}>
-          {item.category} · {item.subcategory} · {item.colour}
+        <Pressable
+          accessibilityLabel="Save item"
+          onPress={() => toggleFavourite(listing.id)}
+        >
+          <Ionicons
+            name={favouriteIds.includes(listing.id) ? "heart" : "heart-outline"}
+            size={30}
+            color={
+              favouriteIds.includes(listing.id) ? colors.danger : colors.ink
+            }
+          />
+        </Pressable>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.h2}>Details</Text>
+        <Text style={styles.body}>
+          {listing.condition} · {listing.category}
         </Text>
-        <Text style={styles.small}>
-          Suggested range {money(symbol, item.suggestedPriceLow)}–
-          {money(symbol, item.suggestedPriceHigh)} · guidance only
-        </Text>
-      </Card>
-      <Text style={styles.h2}>Marketplace status</Text>
-      {item.marketplaceListings.map((m) => {
-        const market = MARKETPLACES[m.marketplaceId];
-        return (
-          <Card key={m.id}>
-            <View style={styles.between}>
-              <View>
-                <Text style={styles.h2}>{market.name}</Text>
-                <Text
-                  style={{
-                    fontWeight: "900",
-                    color:
-                      m.status === "LIVE" ? colors.success : colors.warning,
-                  }}
-                >
-                  {m.status}
-                </Text>
-              </View>
-              <Ionicons
-                name={
-                  m.status === "LIVE"
-                    ? "radio-outline"
-                    : "document-text-outline"
-                }
-                size={27}
-                color={colors.green}
-              />
-            </View>
-            <Text style={styles.small}>
-              {market.capabilities.includes("OAUTH_AVAILABLE")
-                ? "Official connection architecture; not connected"
-                : "Preparation / handoff only"}
-            </Text>
-            <View style={styles.wrap}>
-              <Button
-                label="View / Edit"
-                variant="secondary"
-                onPress={() => setEditing({ ...m })}
-              />
-              <Button
-                label={
-                  market.capabilities.includes("OAUTH_AVAILABLE")
-                    ? "Copy listing"
-                    : "Copy & Open"
-                }
-                variant="ghost"
-                onPress={() => copyOpen(m)}
-              />
-            </View>
-            {m.status !== "LIVE" && !item.soldAt ? (
-              <Button
-                label="Mark as Listed"
-                onPress={() =>
-                  updateMarketplaceListing(item.id, m.marketplaceId, {
-                    status: "LIVE",
-                  })
-                }
-              />
-            ) : null}
-            {m.status === "LIVE" && !item.soldAt ? (
-              <Button
-                label="Mark not live"
-                variant="ghost"
-                onPress={() =>
-                  updateMarketplaceListing(item.id, m.marketplaceId, {
-                    status: "READY",
-                  })
-                }
-              />
-            ) : null}
-          </Card>
-        );
-      })}
-      {!item.soldAt ? (
-        <Button
-          label="Mark item as sold"
-          icon="checkmark-circle-outline"
-          onPress={() => {
-            setSoldMarket(item.marketplaceListings[0]?.marketplaceId ?? "");
-            setSalePrice(String(item.recommendedPrice));
-            setSellOpen(true);
-          }}
-        />
-      ) : null}
-      <Button
-        label="Back to My Items"
-        variant="ghost"
-        onPress={() => router.replace("/(tabs)/items")}
-      />
-      <Modal
-        visible={!!editing}
-        animationType="slide"
-        onRequestClose={() => setEditing(null)}
+        <Text style={styles.body}>{listing.description}</Text>
+      </View>
+      <Pressable
+        onPress={() => router.push(`/seller/${seller.id}`)}
+        style={[styles.card, styles.between]}
       >
-        {editing ? (
-          <Screen>
-            <Header
-              eyebrow={MARKETPLACES[editing.marketplaceId].name.toUpperCase()}
-              title="Edit marketplace draft"
-              subtitle="Changes here do not alter the Master Listing."
-            />
-            <Field
-              label="Title"
-              value={editing.title}
-              onChangeText={(title) => setEditing({ ...editing, title })}
-            />
-            <Field
-              label="Description"
-              multiline
-              value={editing.description}
-              onChangeText={(description) =>
-                setEditing({ ...editing, description })
-              }
-            />
-            <Field
-              label="Price"
-              keyboardType="numeric"
-              value={String(editing.price)}
-              onChangeText={(price) =>
-                setEditing({ ...editing, price: Number(price) || 0 })
-              }
-            />
-            <Field
-              label="Category"
-              value={editing.category}
-              onChangeText={(category) => setEditing({ ...editing, category })}
-            />
-            <Field
-              label="Marketplace notes"
-              multiline
-              value={editing.marketplaceNotes}
-              onChangeText={(marketplaceNotes) =>
-                setEditing({ ...editing, marketplaceNotes })
-              }
-            />
-            <Button
-              label="Save draft"
-              onPress={() => {
-                updateMarketplaceListing(
-                  item.id,
-                  editing.marketplaceId,
-                  editing,
-                );
-                setEditing(null);
-              }}
-            />
-            <Button
-              label="Cancel"
-              variant="ghost"
-              onPress={() => setEditing(null)}
-            />
-          </Screen>
-        ) : null}
-      </Modal>
+        <View>
+          <Text style={styles.h2}>{seller.displayName}</Text>
+          <Text style={styles.small}>
+            {seller.approximateLocation} · Member since{" "}
+            {new Date(seller.memberSince).getFullYear()}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} />
+      </Pressable>
+      {mine ? (
+        <>
+          <Button
+            label={listing.status === "SOLD" ? "Marked sold" : "Mark item sold"}
+            disabled={listing.status === "SOLD"}
+            onPress={() => setSoldOpen(true)}
+          />
+        </>
+      ) : (
+        <>
+          <Button
+            label="MAKE AN OFFER"
+            icon="pricetag-outline"
+            onPress={() => {
+              setAmount(String(Math.max(1, listing.askingPrice - 5)));
+              setOfferOpen(true);
+            }}
+          />
+          <Button
+            label="MESSAGE SELLER"
+            icon="chatbubble-outline"
+            variant="secondary"
+            onPress={() =>
+              router.push(`/conversation/${startConversation(listing.id)}`)
+            }
+          />
+        </>
+      )}
+      <View style={styles.row}>
+        <Button
+          label="Share"
+          variant="ghost"
+          onPress={() =>
+            Alert.alert(
+              "Share",
+              "Native sharing can be connected before release.",
+            )
+          }
+        />
+        <Button label="Report" variant="ghost" onPress={safety} />
+      </View>
+      <View
+        style={{
+          padding: 13,
+          borderRadius: 14,
+          backgroundColor: "#FFF4CB",
+          gap: 4,
+        }}
+      >
+        <Text style={styles.h3}>A safe local handover</Text>
+        <Text style={styles.small}>
+          Meet safely. Do not send money before you are comfortable with the
+          transaction. Never share unnecessary personal information.
+        </Text>
+      </View>
+      {others.length ? (
+        <>
+          <Text style={styles.h2}>Other items from this seller</Text>
+          <View style={styles.wrap}>
+            {others.map((l) => (
+              <ListingCard
+                key={l.id}
+                listing={l}
+                symbol={symbol}
+                favourite={favouriteIds.includes(l.id)}
+                onFavourite={() => toggleFavourite(l.id)}
+                onPress={() => router.push(`/item/${l.id}`)}
+              />
+            ))}
+          </View>
+        </>
+      ) : null}
       <Modal
-        visible={sellOpen}
+        visible={offerOpen}
         animationType="slide"
-        onRequestClose={() => setSellOpen(false)}
+        onRequestClose={() => setOfferOpen(false)}
       >
         <Screen>
           <Header
-            title="Where did it sell?"
-            subtitle="Record the sale manually. SELLR will never claim to delist elsewhere."
+            title={`Make an offer on ${listing.title}`}
+            subtitle={`Asking price ${money(symbol, listing.askingPrice)}`}
           />
-          {item.marketplaceListings.map((m) => (
-            <Pressable
-              key={m.id}
-              onPress={() => setSoldMarket(m.marketplaceId)}
-            >
-              <Card
-                style={[
-                  styles.between,
-                  soldMarket === m.marketplaceId && {
-                    borderColor: colors.green,
-                    borderWidth: 2,
-                  },
-                ]}
-              >
-                <Text style={styles.h3}>
-                  {MARKETPLACES[m.marketplaceId].name}
-                </Text>
-                <Ionicons
-                  name={
-                    soldMarket === m.marketplaceId
-                      ? "checkmark-circle"
-                      : "ellipse-outline"
-                  }
-                  size={24}
-                  color={colors.green}
-                />
-              </Card>
-            </Pressable>
-          ))}
+          <DemoTag text="Offer stays on this device" />
           <Field
-            label="Sale Price"
+            label="Your offer"
             keyboardType="numeric"
-            value={salePrice}
-            onChangeText={setSalePrice}
+            value={amount}
+            onChangeText={setAmount}
           />
           <Field
-            label="Optional Notes"
+            label="Optional message"
             multiline
-            value={notes}
-            onChangeText={setNotes}
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Keep it friendly"
           />
-          <Button label="Record sale" onPress={completeSale} />
+          <Button label="Send Offer" onPress={sendOffer} />
           <Button
             label="Cancel"
             variant="ghost"
-            onPress={() => setSellOpen(false)}
+            onPress={() => setOfferOpen(false)}
+          />
+          <Text style={styles.small}>
+            Sending an offer does not pay for or reserve the item.
+          </Text>
+        </Screen>
+      </Modal>
+      <Modal
+        visible={soldOpen}
+        animationType="slide"
+        onRequestClose={() => setSoldOpen(false)}
+      >
+        <Screen>
+          <Header
+            title="Mark this item as sold?"
+            subtitle="Only do this when you decide the item is no longer available."
+          />
+          <Card style={{ backgroundColor: colors.greenSoft }}>
+            <Text style={styles.h2}>{listing.title}</Text>
+            <Text style={styles.body}>
+              OfferMe does not know whether payment or handover occurred. This
+              action only changes availability in your listings.
+            </Text>
+          </Card>
+          <Button
+            label="Confirm sold"
+            onPress={() => {
+              markSold(listing.id);
+              setSoldOpen(false);
+            }}
+          />
+          <Button
+            label="Cancel"
+            variant="ghost"
+            onPress={() => setSoldOpen(false)}
           />
         </Screen>
       </Modal>

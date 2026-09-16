@@ -8,19 +8,16 @@ export class MockItemAnalysisService implements ItemAnalysisService {
     if (!photoUris.length) throw new Error("Add at least one photo first.");
     await new Promise((resolve) => setTimeout(resolve, 700));
     return {
-      title: "Nike Air Max 270",
-      brand: "Nike",
-      category: "Fashion",
-      subcategory: "Trainers",
-      size: "EU 39",
-      condition: "Good condition",
-      colour: "Black / white",
+      title: "Coffee machine",
+      brand: "",
+      category: "Home",
+      subcategory: "Kitchen appliances",
+      condition: "Good",
       description:
-        "Pre-owned Nike Air Max 270 trainers in good condition. Please review the photos for signs of wear.",
-      suggestedPriceLow: 35,
-      suggestedPriceHigh: 48,
-      recommendedPrice: 44,
-      confidence: 0.78,
+        "Coffee machine in good used condition. Clean and ready for a new home. Please check the original photos for condition.",
+      suggestedPrice: 25,
+      priceConfidence: 0.72,
+      tags: ["coffee", "kitchen", "appliance"],
     };
   }
 }

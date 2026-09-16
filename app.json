@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "SELLR",
-    "slug": "sellr",
-    "scheme": "sellr",
+    "name": "OfferMe",
+    "slug": "offerme",
+    "scheme": "offerme",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -31,8 +31,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow SELLR to choose original item photos for your listing.",
-          "cameraPermission": "Allow SELLR to photograph the item you want to sell.",
+          "photosPermission": "Allow OfferMe to choose original item photos for your listing.",
+          "cameraPermission": "Allow OfferMe to photograph the item you want to sell.",
           "microphonePermission": false
         }
       ],

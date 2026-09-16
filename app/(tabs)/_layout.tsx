@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { colors } from "../../src/theme";
-
 const icon =
   (name: keyof typeof Ionicons.glyphMap) =>
   ({ color, size }: { color: any; size: number }) => (
@@ -12,13 +11,13 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.green,
+        tabBarActiveTintColor: colors.greenDark,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "700" },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "800" },
         tabBarStyle: {
-          height: 76,
-          paddingTop: 7,
-          paddingBottom: 9,
+          height: 74,
+          paddingTop: 6,
+          paddingBottom: 8,
           backgroundColor: colors.surface,
           borderTopColor: colors.line,
         },
@@ -29,31 +28,31 @@ export default function TabLayout() {
         options={{ title: "HOME", tabBarIcon: icon("home-outline") }}
       />
       <Tabs.Screen
-        name="items"
-        options={{ title: "MY ITEMS", tabBarIcon: icon("cube-outline") }}
+        name="browse"
+        options={{ title: "BROWSE", tabBarIcon: icon("search-outline") }}
       />
       <Tabs.Screen
         name="sell-action"
         options={{
           title: "SELL",
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: () => (
             <Ionicons
               name="add"
               color={colors.white}
-              size={27}
+              size={28}
               style={{
-                backgroundColor: colors.green,
-                borderRadius: 25,
+                backgroundColor: colors.greenDark,
+                borderRadius: 26,
                 padding: 9,
-                marginTop: -23,
+                marginTop: -22,
               }}
             />
           ),
         }}
       />
       <Tabs.Screen
-        name="insights"
-        options={{ title: "INSIGHTS", tabBarIcon: icon("bar-chart-outline") }}
+        name="offers"
+        options={{ title: "OFFERS", tabBarIcon: icon("pricetag-outline") }}
       />
       <Tabs.Screen
         name="profile"

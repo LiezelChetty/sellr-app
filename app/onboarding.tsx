@@ -1,132 +1,172 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   Button,
+  Field,
   Header,
+  Logo,
   Pill,
   Screen,
   styles,
-  Wordmark,
 } from "../src/components/ui";
-import { COUNTRIES } from "../src/config/marketplaces";
+import { COUNTRIES, IRISH_COUNTIES } from "../src/config/regions";
 import { useAppStore } from "../src/store/AppStore";
 import { CountryCode } from "../src/types/domain";
 import { colors } from "../src/theme";
-
-const categories = [
-  "Wardrobe",
-  "Kids’ Stuff",
-  "Home",
-  "Electronics",
-  "Everything",
-];
 export default function Onboarding() {
   const router = useRouter();
   const { completeOnboarding } = useAppStore();
   const [step, setStep] = useState(0);
-  const [selected, setSelected] = useState<string[]>([]);
   const [country, setCountry] = useState<CountryCode>("IE");
-  const toggle = (x: string) =>
-    setSelected((s) => (s.includes(x) ? s.filter((v) => v !== x) : [...s, x]));
+  const [county, setCounty] = useState("Waterford");
+  const [town, setTown] = useState("Waterford City");
   return (
     <Screen>
       <View
-        style={{ flex: 1, justifyContent: "space-between", minHeight: 620 }}
+        style={{ flex: 1, justifyContent: "space-between", minHeight: 610 }}
       >
-        <View style={{ gap: 24 }}>
+        <View style={{ gap: 20 }}>
           <View style={styles.between}>
-            <Wordmark />
+            <Logo />
             <Text style={styles.small}>{step + 1} / 3</Text>
           </View>
-          {step === 0 && (
-            <View style={{ gap: 18, paddingTop: 75 }}>
+          {step === 0 ? (
+            <View style={{ gap: 18, paddingTop: 65 }}>
               <View
                 style={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: 22,
+                  width: 70,
+                  height: 70,
+                  borderRadius: 24,
                   backgroundColor: colors.greenSoft,
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
                 <Ionicons
-                  name="layers-outline"
-                  size={30}
-                  color={colors.green}
+                  name="camera-outline"
+                  size={34}
+                  color={colors.greenDark}
                 />
               </View>
               <Header
-                eyebrow="ONE PHOTO. ONE MASTER LISTING."
-                title="One item. Every marketplace."
-                subtitle={
-                  "Photograph your item once.\nSELLR helps prepare it for the places you sell."
-                }
+                title="Turn your clutter into cash."
+                subtitle="Photograph the things you no longer need and put them up for sale in minutes."
               />
-              <Text style={styles.small}>Better listings. Honest photos.</Text>
             </View>
-          )}
-          {step === 1 && (
-            <View style={{ gap: 20, paddingTop: 30 }}>
+          ) : null}
+          {step === 1 ? (
+            <View style={{ gap: 22, paddingTop: 35 }}>
               <Header
-                title="What do you want to clear out?"
-                subtitle="Choose as many as you like. You can change this later."
+                title="Your online garage sale."
+                subtitle="Clear out one thing or a whole room. OfferMe makes listing quick."
+              />
+              {[
+                ["camera", "Take photos"],
+                ["sparkles", "OfferMe prepares your listings"],
+                ["people", "People nearby can make offers"],
+              ].map(([icon, text]) => (
+                <View key={text} style={styles.row}>
+                  <View
+                    style={{
+                      width: 45,
+                      height: 45,
+                      borderRadius: 15,
+                      backgroundColor: colors.greenSoft,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name={`${icon}-outline` as any}
+                      size={22}
+                      color={colors.greenDark}
+                    />
+                  </View>
+                  <Text style={styles.h3}>{text}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          {step === 2 ? (
+            <View style={{ gap: 15 }}>
+              <Header
+                title="Where are you selling?"
+                subtitle="We only show your broad area—not a home address."
               />
               <View style={styles.wrap}>
-                {categories.map((x) => (
+                {COUNTRIES.map((c) => (
                   <Pill
-                    key={x}
-                    label={x}
-                    active={selected.includes(x)}
-                    onPress={() => toggle(x)}
+                    key={c.code}
+                    label={c.name}
+                    active={country === c.code}
+                    onPress={() => setCountry(c.code)}
                   />
                 ))}
               </View>
-            </View>
-          )}
-          {step === 2 && (
-            <View style={{ gap: 18, paddingTop: 25 }}>
-              <Header
-                title="Where are you selling from?"
-                subtitle="This sets your currency and available marketplace preparation. No precise location needed."
+              {country === "IE" ? (
+                <>
+                  <Text style={styles.h3}>County</Text>
+                  <View style={styles.wrap}>
+                    {IRISH_COUNTIES.slice(0, 5).map((c) => (
+                      <Pill
+                        key={c}
+                        label={c}
+                        active={county === c}
+                        onPress={() => setCounty(c)}
+                      />
+                    ))}
+                  </View>
+                </>
+              ) : (
+                <Field
+                  label="Region / state"
+                  value={county}
+                  onChangeText={setCounty}
+                />
+              )}
+              <Field
+                label="Town / City"
+                value={town}
+                onChangeText={setTown}
+                placeholder="Approximate area only"
               />
-              {COUNTRIES.map((c) => (
-                <Pressable
-                  key={c.code}
-                  onPress={() => setCountry(c.code)}
-                  style={[
-                    styles.card,
-                    styles.between,
-                    country === c.code && {
-                      borderColor: colors.green,
-                      borderWidth: 2,
-                    },
-                  ]}
-                >
-                  <Text style={styles.h3}>{c.name}</Text>
-                  <Ionicons
-                    name={
-                      country === c.code
-                        ? "checkmark-circle"
-                        : "ellipse-outline"
-                    }
-                    size={24}
-                    color={colors.green}
-                  />
-                </Pressable>
-              ))}
+              <View
+                style={[
+                  styles.row,
+                  {
+                    padding: 12,
+                    backgroundColor: colors.greenSoft,
+                    borderRadius: 14,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={20}
+                  color={colors.greenDark}
+                />
+                <Text style={[styles.small, { flex: 1 }]}>
+                  Never enter your street or precise home address here.
+                </Text>
+              </View>
             </View>
-          )}
+          ) : null}
         </View>
         <Button
-          label={step === 2 ? "Start using SELLR" : "Continue"}
-          disabled={step === 1 && !selected.length}
+          label={
+            step === 0
+              ? "Get Started"
+              : step === 2
+                ? "Start using OfferMe"
+                : "Continue"
+          }
+          disabled={step === 2 && (!county || !town)}
           onPress={() => {
             if (step < 2) setStep(step + 1);
             else {
-              completeOnboarding(selected, country);
+              completeOnboarding(country, county, town);
               router.replace("/(tabs)");
             }
           }}

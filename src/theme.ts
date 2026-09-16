@@ -1,16 +1,17 @@
 export const colors = {
-  canvas: "#F7F4ED",
-  surface: "#FFFCF6",
-  ink: "#17201C",
-  muted: "#69716C",
-  green: "#123F32",
-  greenSoft: "#DDE9E2",
-  accent: "#D78A54",
-  line: "#E5E0D6",
+  canvas: "#F7F9F6",
+  surface: "#FFFFFF",
+  ink: "#111713",
+  muted: "#667069",
+  green: "#24A148",
+  greenDark: "#147A32",
+  greenSoft: "#E4F5E8",
+  accent: "#FFCE45",
+  line: "#E4E9E4",
   white: "#FFFFFF",
-  danger: "#A4413B",
+  danger: "#B53B35",
   warning: "#8B5D18",
-  success: "#27724F",
+  success: "#16803B",
 };
 export const radius = { sm: 10, md: 16, lg: 24, pill: 999 };
 export const shadow = {

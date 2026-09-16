@@ -3,110 +3,129 @@ import { useRouter } from "expo-router";
 import { Alert, Pressable, Text, View } from "react-native";
 import {
   Card,
-  DemoBanner,
+  DemoTag,
   Header,
+  Logo,
   Screen,
   styles,
-  Wordmark,
 } from "../../src/components/ui";
-import { COUNTRIES } from "../../src/config/marketplaces";
+import { CURRENT_USER_ID } from "../../src/data/demo";
 import { useAppStore } from "../../src/store/AppStore";
 import { colors } from "../../src/theme";
-const staticRows = [
-  ["notifications-outline", "Notifications"],
-  ["shield-checkmark-outline", "Privacy"],
-  ["document-text-outline", "Terms"],
-  ["help-circle-outline", "Help"],
-  ["information-circle-outline", "About SELLR"],
-] as const;
 export default function Profile() {
   const router = useRouter();
-  const { preferences, resetDemo } = useAppStore();
+  const { preferences, profiles, listings, offers, favouriteIds, resetDemo } =
+    useAppStore();
+  const me = profiles.find((x) => x.id === CURRENT_USER_ID)!;
   const row = (
     icon: keyof typeof Ionicons.glyphMap,
     label: string,
-    onPress?: () => void,
-    detail?: string,
+    detail: string,
+    onPress: () => void,
   ) => (
     <Pressable
       key={label}
       onPress={onPress}
-      style={[styles.between, { minHeight: 54 }]}
+      style={[styles.between, { minHeight: 52 }]}
     >
       <View style={styles.row}>
-        <Ionicons name={icon} size={22} color={colors.green} />
+        <Ionicons name={icon} size={21} color={colors.greenDark} />
         <View>
           <Text style={styles.h3}>{label}</Text>
-          {detail ? <Text style={styles.small}>{detail}</Text> : null}
+          <Text style={styles.small}>{detail}</Text>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={19} color={colors.muted} />
+      <Ionicons name="chevron-forward" size={18} color={colors.muted} />
     </Pressable>
   );
   return (
     <Screen>
-      <Wordmark />
+      <Logo />
       <Header
-        eyebrow="SETTINGS"
-        title="Profile"
-        subtitle="Manage your region, selling setup and plan."
+        title={me.displayName}
+        subtitle={`${preferences.town}, ${preferences.county} · Demo profile`}
       />
-      <DemoBanner />
+      <DemoTag />
       <Card>
-        {row("person-outline", "Profile", undefined, "Development profile")}
+        {row(
+          "cube-outline",
+          "My Listings",
+          `${listings.filter((x) => x.sellerId === CURRENT_USER_ID).length} items`,
+          () => router.push("/my-listings"),
+        )}
         <View style={styles.divider} />
+        {row(
+          "storefront-outline",
+          "My Sales",
+          "Create and manage clear-outs",
+          () => router.push("/my-sales"),
+        )}
+        <View style={styles.divider} />
+        {row(
+          "pricetag-outline",
+          "Offers Received",
+          `${offers.filter((x) => x.sellerId === CURRENT_USER_ID).length} offers`,
+          () => router.push("/(tabs)/offers"),
+        )}
+        <View style={styles.divider} />
+        {row(
+          "paper-plane-outline",
+          "Offers Sent",
+          `${offers.filter((x) => x.buyerId === CURRENT_USER_ID).length} offers`,
+          () => router.push("/(tabs)/offers"),
+        )}
+        <View style={styles.divider} />
+        {row(
+          "heart-outline",
+          "Saved Items",
+          `${favouriteIds.length} saved`,
+          () => router.push("/saved"),
+        )}
+      </Card>
+      <Card>
         {row(
           "location-outline",
-          "Selling Region",
-          () => router.push("/region"),
-          COUNTRIES.find((c) => c.code === preferences.countryCode)?.name,
+          "Selling location",
+          `${preferences.town}, ${preferences.county}`,
+          () =>
+            Alert.alert(
+              "Approximate location",
+              "Change location by resetting the demo and completing onboarding again.",
+            ),
         )}
         <View style={styles.divider} />
         {row(
-          "link-outline",
-          "Selling Accounts",
-          () => router.push("/accounts"),
-          "Official integrations only",
+          "shield-checkmark-outline",
+          "Safety",
+          "Meeting and privacy guidance",
+          () =>
+            Alert.alert(
+              "Stay safe",
+              "Meet safely. Do not send money before you are comfortable with the transaction. Never share unnecessary personal information.",
+            ),
         )}
         <View style={styles.divider} />
         {row(
-          "card-outline",
-          "Plan / Credits",
-          () => router.push("/plans"),
-          "Free demo plan",
-        )}
-      </Card>
-      <Card>
-        {staticRows.map((r, i) => (
-          <View key={r[1]}>
-            {row(r[0], r[1], () =>
-              Alert.alert(
-                r[1],
-                "This policy/settings destination is prepared for production content.",
-              ),
-            )}
-            {i < staticRows.length - 1 ? <View style={styles.divider} /> : null}
-          </View>
-        ))}
-      </Card>
-      <Card>
-        {row("log-out-outline", "Sign Out", () =>
-          Alert.alert("Demo mode", "Authentication is not configured yet."),
+          "help-circle-outline",
+          "Help & policies",
+          "Privacy, terms and support",
+          () =>
+            Alert.alert(
+              "Production content required",
+              "Public policies and support channels must be completed before launch.",
+            ),
         )}
         <View style={styles.divider} />
-        {row("refresh-outline", "Reset Demo", () =>
-          Alert.alert(
-            "Reset demo data?",
-            "This removes local onboarding and listing data.",
-            [
-              { text: "Cancel", style: "cancel" },
-              { text: "Reset", style: "destructive", onPress: resetDemo },
-            ],
-          ),
+        {row("refresh-outline", "Reset demo", "Clear local activity", () =>
+          Alert.alert("Reset demo?", "This clears local OfferMe activity.", [
+            { text: "Cancel", style: "cancel" },
+            { text: "Reset", style: "destructive", onPress: resetDemo },
+          ]),
         )}
       </Card>
       <Text style={[styles.small, { textAlign: "center" }]}>
-        SELLR by Designovation · V1 foundation
+        OfferMe connects buyers and sellers. Payment and collection are arranged
+        independently.
       </Text>
     </Screen>
   );
