@@ -35,6 +35,24 @@ type Analysis = {
   warnings: string[];
 };
 
+type ProviderError = {
+  error?: {
+    type?: unknown;
+    code?: unknown;
+    message?: unknown;
+  };
+};
+
+const safeLogValue = (value: unknown, fallback: string) => {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  return value
+    .replace(/sk-[A-Za-z0-9_-]+/g, "[redacted-key]")
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted-token]")
+    .replace(/[\r\n\t]+/g, " ")
+    .trim()
+    .slice(0, 300);
+};
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -186,6 +204,15 @@ Deno.serve(async (req) => {
         429,
       );
     const model = Deno.env.get("OPENAI_VISION_MODEL") || "gpt-4o-mini";
+    console.info(
+      JSON.stringify({
+        event: "listing_analysis_provider_request",
+        provider: "openai",
+        model,
+        api_key_configured: true,
+        image_count: images.length,
+      }),
+    );
     const content = [
       {
         type: "input_text",
@@ -254,7 +281,27 @@ Deno.serve(async (req) => {
       clearTimeout(timeout);
     }
     if (!providerResponse.ok) {
-      console.error("AI provider request failed", providerResponse.status);
+      let providerError: ProviderError = {};
+      try {
+        providerError = (await providerResponse.json()) as ProviderError;
+      } catch {
+        // Keep diagnostics useful even when an upstream proxy returns non-JSON.
+      }
+      const safeProviderError = {
+        event: "listing_analysis_provider_error",
+        provider: "openai",
+        model,
+        status: providerResponse.status,
+        request_id:
+          providerResponse.headers.get("x-request-id") ?? "unavailable",
+        error_type: safeLogValue(providerError.error?.type, "unknown"),
+        error_code: safeLogValue(providerError.error?.code, "unknown"),
+        error_message: safeLogValue(
+          providerError.error?.message,
+          "Provider returned no JSON error message.",
+        ),
+      };
+      console.error(JSON.stringify(safeProviderError));
       return json(
         {
           error:
@@ -274,7 +321,17 @@ Deno.serve(async (req) => {
         .find((item: { type?: string }) => item.type === "output_text")?.text;
     if (typeof outputText !== "string")
       throw new Error("Provider returned no structured output.");
-    return json({ analysis: sanitize(JSON.parse(outputText), currency) });
+    const analysis = sanitize(JSON.parse(outputText), currency);
+    console.info(
+      JSON.stringify({
+        event: "listing_analysis_provider_success",
+        provider: "openai",
+        model: safeLogValue(provider.model, model),
+        request_id:
+          providerResponse.headers.get("x-request-id") ?? "unavailable",
+      }),
+    );
+    return json({ analysis });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError")
       return json(

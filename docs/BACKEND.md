@@ -72,6 +72,8 @@ The prompt treats multiple photos as views of one item, forbids unsupported bran
 
 Cost controls currently comprise authenticated-only invocation, 10 analyses per user per rolling hour, six-image and byte limits, MIME validation, a provider timeout, bounded structured output, and sanitized client errors. Before a larger launch, add project-level OpenAI spend alerts, Supabase function monitoring, abuse analytics and evaluation datasets covering varied items, lighting, damage and ambiguous branding.
 
+Provider failures are logged server-side as structured, redacted events containing the HTTP status, OpenAI error type/code, model and request ID. The function never logs the API key, bearer token, image payload or user JWT, and the client continues to receive only the friendly manual-entry fallback.
+
 ### AI acceptance testing
 
 Use two authenticated test accounts in a non-production release channel. Test one and multiple views of generic drinkware, furniture, toys, footwear, appliances and electronics; include unbranded, visibly damaged and ambiguous items. Confirm that brands/models are omitted unless visible, electronics are not claimed working, warnings appear for uncertainty, all fields remain editable, the original files are unchanged, and manual entry works with the provider secret temporarily absent. AI image interpretation is probabilistic, so these are evaluation cases—not hardcoded title mappings.
