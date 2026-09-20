@@ -77,7 +77,12 @@ export default function Item() {
       const offerId = await createOffer(listing.id, Number(amount), message);
       setOfferOpen(false);
       router.push(`/offer/${offerId}`);
-    } catch (error) { Alert.alert("Could not send offer", error instanceof Error ? error.message : "Try again."); }
+    } catch (error) {
+      Alert.alert(
+        "Could not send offer",
+        error instanceof Error ? error.message : "Try again.",
+      );
+    }
   };
   const showShareError = () =>
     Alert.alert("Sharing unavailable", "Please try sharing again.");
@@ -107,7 +112,9 @@ export default function Item() {
           }}
         >
           <Text style={styles.h3}>
-            Your listing is live locally in this demo.
+            {demoMode
+              ? "Your listing is live locally in this demo."
+              : "Your listing is live."}
           </Text>
         </View>
       ) : null}
@@ -189,15 +196,28 @@ export default function Item() {
             icon="chatbubble-outline"
             variant="secondary"
             onPress={async () => {
-              try { router.push(`/conversation/${await startConversation(listing.id)}`); }
-              catch (error) { Alert.alert("Could not start conversation", error instanceof Error ? error.message : "Try again."); }
+              try {
+                router.push(
+                  `/conversation/${await startConversation(listing.id)}`,
+                );
+              } catch (error) {
+                Alert.alert(
+                  "Could not start conversation",
+                  error instanceof Error ? error.message : "Try again.",
+                );
+              }
             }}
           />
         </>
       )}
       <View style={styles.row}>
         <Button label="Share" variant="ghost" onPress={shareListing} />
-        <Button label={demoMode ? "Reporting unavailable in demo" : "Report listing"} variant="ghost" disabled={demoMode || mine} onPress={() => setReportOpen(true)} />
+        <Button
+          label={demoMode ? "Reporting unavailable in demo" : "Report listing"}
+          variant="ghost"
+          disabled={demoMode || mine}
+          onPress={() => setReportOpen(true)}
+        />
       </View>
       <View
         style={{
@@ -285,8 +305,15 @@ export default function Item() {
           <Button
             label="Confirm sold"
             onPress={async () => {
-              try { await markSold(listing.id); setSoldOpen(false); }
-              catch (error) { Alert.alert("Could not update listing", error instanceof Error ? error.message : "Try again."); }
+              try {
+                await markSold(listing.id);
+                setSoldOpen(false);
+              } catch (error) {
+                Alert.alert(
+                  "Could not update listing",
+                  error instanceof Error ? error.message : "Try again.",
+                );
+              }
             }}
           />
           <Button
@@ -296,8 +323,48 @@ export default function Item() {
           />
         </Screen>
       </Modal>
-      <Modal visible={reportOpen} animationType="slide" onRequestClose={() => setReportOpen(false)}>
-        <Screen><Header title="Report this listing" subtitle="Tell OfferMe what appears unsafe or inappropriate. Do not include private information." /><Field label="Reason" multiline value={reportReason} onChangeText={setReportReason} /><Button label="Submit report" disabled={reportReason.trim().length < 10} onPress={async () => { try { await reportListing(listing.id, reportReason.trim()); setReportOpen(false); setReportReason(""); Alert.alert("Report submitted", "Thank you. The report is recorded for review."); } catch (error) { Alert.alert("Could not submit report", error instanceof Error ? error.message : "Try again."); } }} /><Button label="Cancel" variant="ghost" onPress={() => setReportOpen(false)} /></Screen>
+      <Modal
+        visible={reportOpen}
+        animationType="slide"
+        onRequestClose={() => setReportOpen(false)}
+      >
+        <Screen>
+          <Header
+            title="Report this listing"
+            subtitle="Tell OfferMe what appears unsafe or inappropriate. Do not include private information."
+          />
+          <Field
+            label="Reason"
+            multiline
+            value={reportReason}
+            onChangeText={setReportReason}
+          />
+          <Button
+            label="Submit report"
+            disabled={reportReason.trim().length < 10}
+            onPress={async () => {
+              try {
+                await reportListing(listing.id, reportReason.trim());
+                setReportOpen(false);
+                setReportReason("");
+                Alert.alert(
+                  "Report submitted",
+                  "Thank you. The report is recorded for review.",
+                );
+              } catch (error) {
+                Alert.alert(
+                  "Could not submit report",
+                  error instanceof Error ? error.message : "Try again.",
+                );
+              }
+            }}
+          />
+          <Button
+            label="Cancel"
+            variant="ghost"
+            onPress={() => setReportOpen(false)}
+          />
+        </Screen>
       </Modal>
     </Screen>
   );

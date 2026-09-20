@@ -36,6 +36,8 @@ export interface AIAnalysis {
   suggestedPrice: number;
   priceConfidence: number;
   tags: string[];
+  warnings?: string[];
+  analysisSource?: "vision" | "development" | "manual";
 }
 export interface Listing extends AIAnalysis {
   id: string;

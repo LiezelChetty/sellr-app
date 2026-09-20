@@ -29,7 +29,10 @@ const blank: AIAnalysis = {
   suggestedPrice: 0,
   priceConfidence: 0,
   tags: [],
+  warnings: [],
+  analysisSource: "manual",
 };
+const CONDITIONS = ["New", "Like new", "Good", "Fair", "For parts"];
 export default function Sell() {
   const router = useRouter();
   const goBack = useSafeBack("/(tabs)");
@@ -60,13 +63,23 @@ export default function Sell() {
   const analyse = async () => {
     try {
       setLoading(true);
-      setAnalysis(await itemAnalysisService.analyse(photos));
+      setAnalysis(await itemAnalysisService.analyse(photos, { demoMode }));
       setStep(1);
     } catch (e) {
       Alert.alert(
-        "Could not prepare draft",
-        e instanceof Error ? e.message : "Try again.",
+        "Enter the details manually",
+        e instanceof Error
+          ? e.message
+          : "We couldn’t prepare this listing automatically. You can enter the details yourself.",
       );
+      setAnalysis({
+        ...blank,
+        analysisSource: "manual",
+        warnings: [
+          "Automatic suggestions were unavailable. Enter and check the listing details yourself.",
+        ],
+      });
+      setStep(1);
     } finally {
       setLoading(false);
     }
@@ -82,8 +95,13 @@ export default function Sell() {
       const id = await addListing({ ...analysis, photos });
       router.replace(`/item/${id}?created=1`);
     } catch (error) {
-      Alert.alert("Could not publish listing", error instanceof Error ? error.message : "Try again.");
-    } finally { setLoading(false); }
+      Alert.alert(
+        "Could not publish listing",
+        error instanceof Error ? error.message : "Try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <Screen>
@@ -99,7 +117,9 @@ export default function Sell() {
         <Logo />
         <Text style={styles.small}>{step + 1}/3</Text>
       </View>
-      {demoMode ? <DemoTag text="Development preview · suggestions are simulated" /> : <DemoTag text="Draft suggestions are simulated—review before publishing" />}
+      {demoMode ? (
+        <DemoTag text="Development preview · photographs are not analysed" />
+      ) : null}
       {step === 0 ? (
         <>
           <Header
@@ -161,8 +181,19 @@ export default function Sell() {
           />
           <Button
             disabled={!photos.length || loading}
-            label={loading ? "Preparing draft…" : "Prepare draft suggestion"}
+            label={
+              loading ? "Analysing original photos…" : "Prepare listing draft"
+            }
             onPress={analyse}
+          />
+          <Button
+            disabled={!photos.length || loading}
+            label="Enter details manually"
+            variant="ghost"
+            onPress={() => {
+              setAnalysis({ ...blank, analysisSource: "manual" });
+              setStep(1);
+            }}
           />
         </>
       ) : null}
@@ -170,8 +201,28 @@ export default function Sell() {
         <>
           <Header
             title="Check your item"
-            subtitle="OfferMe suggestions can be wrong. Check your item before publishing."
+            subtitle="Suggestions can be wrong. You control every detail and nothing publishes until you confirm."
           />
+          {analysis.analysisSource === "vision" &&
+          analysis.priceConfidence < 0.65 ? (
+            <View
+              style={{
+                padding: 12,
+                borderRadius: 14,
+                backgroundColor: "#FFF4CB",
+              }}
+            >
+              <Text style={styles.body}>
+                We’re not completely sure about this item — check the details
+                before publishing.
+              </Text>
+            </View>
+          ) : null}
+          {analysis.warnings?.map((warning) => (
+            <Text key={warning} style={styles.small}>
+              • {warning}
+            </Text>
+          ))}
           <Field
             label="Title"
             value={analysis.title}
@@ -197,11 +248,17 @@ export default function Sell() {
             value={analysis.brand}
             onChangeText={(v) => update("brand", v)}
           />
-          <Field
-            label="Condition"
-            value={analysis.condition}
-            onChangeText={(v) => update("condition", v)}
-          />
+          <Text style={styles.h3}>Condition suggestion</Text>
+          <View style={styles.wrap}>
+            {CONDITIONS.map((condition) => (
+              <Pill
+                key={condition}
+                label={condition}
+                active={analysis.condition === condition}
+                onPress={() => update("condition", condition)}
+              />
+            ))}
+          </View>
           <Field
             label="Description"
             multiline
@@ -209,14 +266,15 @@ export default function Sell() {
             onChangeText={(v) => update("description", v)}
           />
           <Field
-            label={`Suggested asking price (${REGIONS[preferences.countryCode].symbol})`}
+            label={`${analysis.analysisSource === "vision" ? "AI price estimate" : "Asking price"} (${REGIONS[preferences.countryCode].symbol})`}
             keyboardType="numeric"
             value={String(analysis.suggestedPrice)}
             onChangeText={(v) => update("suggestedPrice", v)}
           />
           <Text style={styles.small}>
-            Draft confidence {Math.round(analysis.priceConfidence * 100)}% ·
-            simulated guidance only
+            {analysis.analysisSource === "vision"
+              ? "This is a cautious AI estimate, not live market-comparable pricing. Choose the asking price yourself."
+              : "Choose an asking price you are comfortable with."}
           </Text>
           <Button
             label="Review listing"
